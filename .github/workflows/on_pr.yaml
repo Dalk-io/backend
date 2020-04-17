@@ -15,7 +15,9 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install dependencies
         run: pub get
-      - name: Install dependencies
+      - name: Check format
+        run: dartfmt -n --set-exit-if-changed -l 160 .
+      - name: Build generated code
         run: pub run build_runner build
       - name: Dart analyze
         run: dartanalyzer --options=analysis_options.yaml --fatal-hints --fatal-warnings .
