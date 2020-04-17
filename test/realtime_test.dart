@@ -362,19 +362,35 @@ void main() {
       }
     });
 
-    test('valid', () async {
+    test('get all message', () async {
       final getConversationById = GetConversationByIdMock();
       when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}));
       final getMessagesForConversation = GetMessagesForConversationMock();
       when(getMessagesForConversation.request(any)).thenAnswer((_) async => [
-            Message('toto', '1', '12', '1', 'Hello world', DateTime.now(),
-                [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.sent)]),
             Message('toto', '2', '12', '1', 'How are you', DateTime.now(),
+                [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.sent)]),
+            Message('toto', '1', '12', '1', 'Hello world', DateTime.now(),
                 [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.sent)]),
           ]);
       final realtime = Realtime(Project('toto', null), null, getConversationById, null, null, null, null, null, null, getMessagesForConversation);
       final response = await realtime.getMessages(Parameters('getMessages', {'from': 0, 'to': -1, 'conversationId': '12'}));
       expect(response.length == 2, isTrue);
+    });
+
+    test('get last message', () async {
+      final getConversationById = GetConversationByIdMock();
+      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}));
+      final getMessagesForConversation = GetMessagesForConversationMock();
+      when(getMessagesForConversation.request(any)).thenAnswer((_) async => [
+            Message('toto', '2', '12', '1', 'How are you', DateTime.now(),
+                [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.sent)]),
+            Message('toto', '1', '12', '1', 'Hello world', DateTime.now(),
+                [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.sent)]),
+          ]);
+      final realtime = Realtime(Project('toto', null), null, getConversationById, null, null, null, null, null, null, getMessagesForConversation);
+      final response = await realtime.getMessages(Parameters('getMessages', {'from': 0, 'to': 1, 'conversationId': '12'}));
+      expect(response.length == 1, isTrue);
+      expect(response.first['text'], 'How are you');
     });
   });
 }
