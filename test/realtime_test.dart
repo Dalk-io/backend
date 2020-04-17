@@ -393,4 +393,31 @@ void main() {
       expect(response.first['text'], 'How are you');
     });
   });
+
+  group('get conversation details', () {
+    test('bad conversation id', () async {
+      final getConversationById = GetConversationByIdMock();
+      when(getConversationById.request(any)).thenAnswer((_) async => null);
+      final realtime = Realtime(Project('toto', null), null, getConversationById, null, null, null, null, null, null, null);
+      try {
+        await realtime.getConversationDetail(Parameters('getConversationDetails', {'id': '12'}));
+      } on RpcException catch (e) {
+        expect(e.code, HttpStatus.notFound);
+        expect(e.message, 'Conversation not found');
+        expect(e.data, {'id': '12'});
+      }
+    });
+
+    test('valid conversation', () async {
+      final getConversationById = GetConversationByIdMock();
+      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'})
+        ..messages.addAll([
+          Message('toto', '1', '12', '1', 'Hello world!', DateTime.now(), [MessageStateByUser('2', MessageState.sent)]),
+        ]));
+      final realtime = Realtime(Project('toto', null), null, getConversationById, null, null, null, null, null, null, null);
+      final response = await realtime.getConversationDetail(Parameters('getConversationDetails', {'id': '12'}));
+      expect(response['id'], '12');
+      expect(response['messages'].length, 1);
+    });
+  });
 }
