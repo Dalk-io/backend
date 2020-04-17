@@ -2,7 +2,6 @@
 FROM google/dart AS dart-runtime
 WORKDIR /app
 ADD pubspec.* /app/
-ADD common/network_entities /common/network_entities/
 RUN pub get
 ADD bin /app/bin/
 ADD lib /app/lib/

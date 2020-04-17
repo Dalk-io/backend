@@ -182,7 +182,7 @@ class Realtime {
     final to = parameters['to'].asIntOr(-1);
     final conversationId = parameters['conversationId'].asString;
     logger.fine('get messages parameters $from $to');
-    if (from < to) {
+    if (to != -1 && from > to) {
       throw RpcException.invalidParams('from can\'t be inferior at to');
     }
     final conversation = _getConversationById.request(GetConversationByIdParameters(project.id, conversationId, false));
@@ -191,7 +191,13 @@ class Realtime {
       logger.info('getMessages took ${sw.elapsed}');
       throw RpcException(HttpStatus.notFound, 'Conversation not found', data: <String, dynamic>{'id': conversationId});
     }
-    final messages = await _getMessagesForConversation.request(GetMessagesForConversationParameters(project.id, conversationId, from, to));
+    var messages = await _getMessagesForConversation.request(GetMessagesForConversationParameters(project.id, conversationId, from, to));
+    if (messages.length > from) {
+      messages = messages.skip(from).toList();
+    }
+    if (to != -1 && messages.length >= to - from) {
+      messages = messages.take(to - from).toList();
+    }
     final response = messages.map((message) => message.toJson()).toList(growable: false);
     logger.info('getMessages took ${sw.elapsed}');
     return response;
