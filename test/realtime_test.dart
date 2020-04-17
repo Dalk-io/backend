@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:backend/src/api_v1/projects/realtime.dart';
 import 'package:backend/src/models/conversation.dart';
+import 'package:backend/src/models/message.dart';
 import 'package:backend/src/models/project.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:json_rpc_2/error_code.dart';
@@ -14,6 +15,7 @@ import 'mocks/rpc/conversation/get_conversation_by_id.dart';
 import 'mocks/rpc/conversation/save_conversation.dart';
 import 'mocks/rpc/conversation/update_conversation_subject_and_avatar.dart';
 import 'mocks/rpc/conversations/get_conversations_for_user.dart';
+import 'mocks/rpc/messages/get_messages_for_conversation.dart';
 
 void main() {
   test('add Peer', () async {
@@ -326,6 +328,53 @@ void main() {
           'messages': <dynamic>[],
         })).called(1);
       });
+    });
+  });
+
+  group('get messages', () {
+    test('bad conversation id', () async {
+      final getConversationById = GetConversationByIdMock();
+      when(getConversationById.request(any)).thenAnswer((_) async => null);
+      final getMessagesForConversation = GetMessagesForConversationMock();
+      when(getMessagesForConversation.request(any)).thenAnswer((_) async => [
+            Message('toto', '1', '12', '1', 'Hello world', DateTime.now(),
+                [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.sent)]),
+            Message('toto', '2', '12', '1', 'How are you', DateTime.now(),
+                [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.sent)]),
+          ]);
+      final realtime = Realtime(Project('toto', null), null, getConversationById, null, null, null, null, null, null, getMessagesForConversation);
+      try {
+        await realtime.getMessages(Parameters('getMessages', {'from': 0, 'to': -1, 'conversationId': '12'}));
+      } on RpcException catch (e) {
+        expect(e.code, HttpStatus.notFound);
+        expect(e.message, 'Conversation not found');
+        expect(e.data, {'id': '12'});
+      }
+    });
+
+    test('bad value of from and to', () async {
+      final realtime = Realtime(Project('toto', null), null, null, null, null, null, null, null, null, null);
+      try {
+        await realtime.getMessages(Parameters('getMessages', {'from': 10, 'to': 1, 'conversationId': '12'}));
+      } on RpcException catch (e) {
+        expect(e.code, INVALID_PARAMS);
+        expect(e.message, 'from can\'t be inferior at to');
+      }
+    });
+
+    test('valid', () async {
+      final getConversationById = GetConversationByIdMock();
+      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}));
+      final getMessagesForConversation = GetMessagesForConversationMock();
+      when(getMessagesForConversation.request(any)).thenAnswer((_) async => [
+            Message('toto', '1', '12', '1', 'Hello world', DateTime.now(),
+                [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.sent)]),
+            Message('toto', '2', '12', '1', 'How are you', DateTime.now(),
+                [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.sent)]),
+          ]);
+      final realtime = Realtime(Project('toto', null), null, getConversationById, null, null, null, null, null, null, getMessagesForConversation);
+      final response = await realtime.getMessages(Parameters('getMessages', {'from': 0, 'to': -1, 'conversationId': '12'}));
+      expect(response.length == 2, isTrue);
     });
   });
 }

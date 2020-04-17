@@ -182,7 +182,7 @@ class Realtime {
     final to = parameters['to'].asIntOr(-1);
     final conversationId = parameters['conversationId'].asString;
     logger.fine('get messages parameters $from $to');
-    if (from < to) {
+    if (to != -1 && from > to) {
       throw RpcException.invalidParams('from can\'t be inferior at to');
     }
     final conversation = _getConversationById.request(GetConversationByIdParameters(project.id, conversationId, false));
