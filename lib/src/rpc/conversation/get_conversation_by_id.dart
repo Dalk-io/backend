@@ -20,8 +20,10 @@ class GetConversationById extends Endpoint<GetConversationByIdParameters, Conver
       return null;
     }
     final conversation = Conversation.fromDatabase(conversationData.first);
-    final messages = await _getMessagesForConversation.request(GetMessagesForConversationParameters(input.projectId, input.conversationId, 0, -1));
-    conversation.messages.addAll(messages);
+    if (input.getMessages) {
+      final messages = await _getMessagesForConversation.request(GetMessagesForConversationParameters(input.projectId, input.conversationId, 0, -1));
+      conversation.messages.addAll(messages);
+    }
     return conversation;
   }
 }
