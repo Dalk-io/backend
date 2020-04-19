@@ -7,10 +7,8 @@ import 'package:backend/src/models/project.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:json_rpc_2/error_code.dart';
 import 'package:json_rpc_2/json_rpc_2.dart';
-import 'package:logging/logging.dart';
 import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
-import 'package:http/http.dart' as http;
 
 import 'mocks/io_client.dart';
 import 'mocks/peer.dart';

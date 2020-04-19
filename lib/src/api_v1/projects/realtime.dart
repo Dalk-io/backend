@@ -23,7 +23,6 @@ import 'package:http/io_client.dart';
 import 'package:json_rpc_2/json_rpc_2.dart';
 import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
-import 'package:http/http.dart' as http;
 
 typedef DateTimeFactory = DateTime Function();
 
