@@ -10,7 +10,7 @@ class GetConversationByIdFromDatabase extends DatabaseEndpoint<GetConversationBy
       : super(
           pgPool,
           (input) => pgPool.query(
-            'SELECT id, subject, avatar, admins, users, isGroupd FROM conversations WHERE projectId = @projectId AND id = @id',
+            'SELECT id, subject, avatar, admins, users, isGroup FROM conversations WHERE projectId = @projectId AND id = @id',
             substitutionValues: <String, String>{
               'projectId': input.projectId,
               'id': input.conversationId,
