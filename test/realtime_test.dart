@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:backend/src/api_v1/projects/realtime.dart';
 import 'package:backend/src/models/conversation.dart';
@@ -591,6 +592,26 @@ void main() {
         await realtime.updateMessageState(Parameters('updateMessageState', {'id': '1', 'state': 2}), peer);
       } on RpcException catch (e) {
         expect(e.code, HttpStatus.notFound);
+      }
+    });
+
+    test('invalid change state', () async {
+      final getMessageById = GetMessageByIdMock();
+      when(getMessageById.request(any)).thenAnswer(
+        (_) async => Message('toto', '1', '12', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30), [
+          MessageStateByUser('1', MessageState.seen),
+        ]),
+      );
+      final realtime = Realtime(Project('toto', null), null, null, null, null, null, null, getMessageById, null, null);
+      final peer = PeerMock();
+      realtime.addPeer(peer);
+      realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+      try {
+        await realtime.updateMessageState(Parameters('updateMessageState', {'id': '1', 'state': MessageState.sent.index}), peer);
+      } on RpcException catch (e) {
+        expect(e.code, HttpStatus.preconditionFailed);
+        expect(e.message, 'Cannot change state');
+        expect(e.data, {'oldState': 2, 'newState': 0});
       }
     });
 
