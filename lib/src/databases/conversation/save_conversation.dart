@@ -11,7 +11,7 @@ class SaveConversationToDatabase extends DatabaseEndpoint<SaveConversationParame
       : super(
           pgPool,
           (input) => pgPool.query(
-            'INSERT INTO conversations (projectId, id, subject, avatar, admins, users, lastUpdate) VALUES (@projectId, @id, @subject, @avatar, @admins, @users, @lastUpdate);',
+            'INSERT INTO conversations (projectId, id, subject, avatar, admins, users, lastUpdate, isGroup) VALUES (@projectId, @id, @subject, @avatar, @admins, @users, @lastUpdate, @isGroup);',
             substitutionValues: <String, dynamic>{
               'projectId': input.projectId,
               'id': input.conversation.id,
@@ -20,6 +20,7 @@ class SaveConversationToDatabase extends DatabaseEndpoint<SaveConversationParame
               'admins': json.encode(input.conversation.admins.toList()),
               'users': json.encode(input.conversation.users.toList()),
               'lastUpdate': DateTime.now().toUtc(),
+              'isGroup': input.conversation.isGroup,
             },
           ),
         );

@@ -30,6 +30,7 @@ void main() {
             null,
             json.encode(['1']),
             json.encode(['1', '2']),
+            false,
           ]
         ]);
     when(getLastMessageForConversationFromDatabase.request(GetLastMessageForConversationParameters('toto', '1', '12345'))).thenAnswer((_) async => <List>[]);
@@ -53,6 +54,7 @@ void main() {
             null,
             json.encode(['1']),
             json.encode(['1', '2']),
+            false,
           ]
         ]);
     when(getLastMessageForConversationFromDatabase.request(GetLastMessageForConversationParameters(projectId, '1', userId))).thenAnswer((_) async => <List>[
