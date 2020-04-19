@@ -27,5 +27,10 @@ jobs:
         run: |
           scp -r bin lib pubspec.yaml pubspec.lock tools root@51.15.215.104:/root/backend
       - name: Connect to server and launch new version
-        run: |
-          ssh root@51.15.215.104 'bash -c backend/tools/deploy.sh'
+        run: ssh root@51.15.215.104 /bin/bash << EOF
+  cd backend
+  /usr/lib/dart/bin/pub get
+  /usr/lib/dart/bin/pub run build_runner build
+  killall dart || echo "Process was not running."
+  /usr/lib/dart/bin/dart bin/main.dart > backend.log &
+EOF
