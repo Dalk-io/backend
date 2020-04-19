@@ -36,5 +36,9 @@ export 'src/rpc/conversation/update_conversation_subject_and_avatar.dart';
 export 'src/rpc/conversation/get_number_of_message_for_conversation.dart';
 export 'src/rpc/conversation/conversation.dart';
 
+//  project
+export 'src/databases/project/get_project_by_key.dart';
+export 'src/rpc/project/get_project_by_key.dart';
+
 //  contact
 export 'src/databases/contact/save_contact.dart';

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:backend/backend.dart';
 import 'package:backend/src/models/conversation.dart';
 import 'package:backend/src/models/message.dart';
 import 'package:backend/src/models/project.dart';
@@ -20,6 +21,7 @@ import 'package:backend/src/rpc/message/save_message.dart';
 import 'package:backend/src/rpc/message/update_message_state.dart';
 import 'package:backend/src/rpc/messages/get_messages_for_conversation.dart';
 import 'package:backend/src/rpc/messages/parameters.dart';
+import 'package:crypto/crypto.dart';
 import 'package:http/io_client.dart';
 import 'package:json_rpc_2/json_rpc_2.dart';
 import 'package:logging/logging.dart';
@@ -31,7 +33,7 @@ DateTime _defaultDateTimeFactory() => DateTime.now().toUtc();
 
 @immutable
 class Realtime {
-  final Project project;
+  final ProjectInformations projectInformations;
   final UpdateConversationSubjectAndAvatar _updateConversationSubjectAndAvatar;
   final GetConversationById _getConversationById;
   final SaveConversation _saveConversation;
@@ -42,6 +44,7 @@ class Realtime {
   final SaveMessage _saveMessage;
   final GetMessageById _getMessageById;
   final UpdateMessageState _updateMessageState;
+  final GetProjectByKey _getProjectByKey;
 
   final List<String> _users = [];
   final List<Peer> _connectedPeers = [];
@@ -52,7 +55,7 @@ class Realtime {
   final IOClient _httpClient;
 
   Realtime(
-    this.project,
+    this.projectInformations,
     this._updateConversationSubjectAndAvatar,
     this._getConversationById,
     this._saveConversation,
@@ -62,10 +65,11 @@ class Realtime {
     this._saveMessage,
     this._getMessageById,
     this._updateMessageState,
-    this._getMessagesForConversation, {
+    this._getMessagesForConversation,
+    this._getProjectByKey, {
     DateTimeFactory dateTimeFactory,
     IOClient httpClient,
-  })  : _logger = Logger('Realtime-${project.id}'),
+  })  : _logger = Logger('Realtime-${projectInformations.key}'),
         _httpClient = httpClient ?? IOClient(),
         _dateTimeFactory = dateTimeFactory ?? _defaultDateTimeFactory;
 
@@ -105,10 +109,19 @@ class Realtime {
     _connectedPeers.remove(peer);
   }
 
-  bool registerUser(Parameters parameters, Peer peer) {
+  Future<bool> registerUser(Parameters parameters, Peer peer) async {
     final sw = Stopwatch()..start();
     final logger = Logger('${_logger.name}.registerUser');
     final id = parameters['id'].asString;
+    final signature = parameters['signature'].asStringOr(null);
+    final project = await _getProjectByKey.request(projectInformations.key);
+    final _projectInformations = projectInformations.key == project.production.key ? project.production : project.development;
+    if (_projectInformations.secure) {
+      final _signature = sha512.convert(utf8.encode('$id${_projectInformations.secret}')).toString();
+      if (signature != _signature) {
+        throw RpcException(HttpStatus.unauthorized, 'Invalid signature');
+      }
+    }
     logger.fine('register user $id');
     _connectedUsers.add(User(id, peer));
     _users.add(id);
@@ -123,13 +136,13 @@ class Realtime {
     final subject = parameters['subject'].asStringOr(null);
     final avatar = parameters['avatar'].asStringOr(null);
     logger.fine('set conversation options subject: $subject, avatar: $avatar');
-    final conversation = _getConversationById.request(GetConversationByIdParameters(project.id, conversationId, false));
+    final conversation = _getConversationById.request(GetConversationByIdParameters(projectInformations.key, conversationId, false));
     if (conversation == null) {
       logger.warning('Conversation $conversationId not found');
       logger.info('setConversationOptions took ${sw.elapsed}');
       throw RpcException(HttpStatus.notFound, 'Conversation not found', data: <String, dynamic>{'id': conversationId});
     }
-    await _updateConversationSubjectAndAvatar.request(UpdateConversationSubjectAndAvatarParameters(project.id, conversationId, subject, avatar));
+    await _updateConversationSubjectAndAvatar.request(UpdateConversationSubjectAndAvatarParameters(projectInformations.key, conversationId, subject, avatar));
     logger.info('setConversationOptions took ${sw.elapsed}');
   }
 
@@ -141,7 +154,7 @@ class Realtime {
       (element) => element.peer == peer,
       orElse: () => null,
     );
-    final userConversations = await _getConversationsForUser.request(GetConversationsForUserParameters(project.id, user.id));
+    final userConversations = await _getConversationsForUser.request(GetConversationsForUserParameters(projectInformations.key, user.id));
     final response = userConversations.map((conversation) => conversation.toJson(putMessages: true)).toList(growable: false);
     logger.info('getConversations took ${sw.elapsed}');
     return response;
@@ -152,13 +165,19 @@ class Realtime {
     final logger = Logger('${_logger.name}.getOrcreateConversation');
     final conversationId = parameters['id'].asString;
     final user = _connectedUsers.firstWhere((element) => element.peer == peer, orElse: () => null);
-    final existingConversation = await _getConversationById.request(GetConversationByIdParameters(project.id, conversationId, false));
+    final existingConversation = await _getConversationById.request(GetConversationByIdParameters(projectInformations.key, conversationId, false));
     if (existingConversation != null) {
       logger.fine('get conversations ${existingConversation.id} ${existingConversation.users} ${existingConversation.subject} ${existingConversation.avatar}');
       logger.info('getOrcreateConversation took ${sw.elapsed}');
       return existingConversation.toJson();
     }
     final to = parameters['users'].asList.cast<String>()..removeWhere((element) => element == user.id);
+    final project = await _getProjectByKey.request(projectInformations.key);
+    final _projectInformations = projectInformations.key == project.production.key ? project.production : project.development;
+    if (_projectInformations.groupLimitation != -1 && to.length + 1 > _projectInformations.groupLimitation) {
+      throw RpcException(HttpStatus.unauthorized, 'Group conversation limit',
+          data: {'groupLimitation': _projectInformations.groupLimitation, 'groupSize': to.length});
+    }
     final subject = parameters['subject'].asStringOr(null);
     final avatar = parameters['avatar'].asStringOr(null);
     final isGroup = parameters['isGroupd'].asBoolOr(false);
@@ -174,7 +193,7 @@ class Realtime {
       isGroup,
     );
     logger.fine('create conversations $conversation');
-    await _saveConversation.request(SaveConversationParameters(project.id, conversation));
+    await _saveConversation.request(SaveConversationParameters(projectInformations.key, conversation));
     final connectedOthers = [
       ..._connectedUsers.where((element) => to.contains(element.id)),
       ..._connectedUsers.where((element) => element.id == user.id).where((element) => element.peer != user.peer)
@@ -200,13 +219,13 @@ class Realtime {
     if (to != -1 && from > to) {
       throw RpcException.invalidParams('from can\'t be inferior at to');
     }
-    final conversation = _getConversationById.request(GetConversationByIdParameters(project.id, conversationId, false));
+    final conversation = _getConversationById.request(GetConversationByIdParameters(projectInformations.key, conversationId, false));
     if (conversation == null) {
       logger.warning('Conversation $conversationId not found');
       logger.info('getMessages took ${sw.elapsed}');
       throw RpcException(HttpStatus.notFound, 'Conversation not found', data: <String, dynamic>{'id': conversationId});
     }
-    var messages = await _getMessagesForConversation.request(GetMessagesForConversationParameters(project.id, conversationId, from, to));
+    var messages = await _getMessagesForConversation.request(GetMessagesForConversationParameters(projectInformations.key, conversationId, from, to));
     if (messages.length > from) {
       messages = messages.skip(from).toList();
     }
@@ -223,7 +242,7 @@ class Realtime {
     final logger = Logger('${_logger.name}.getConversationDetail');
     final conversationId = parameters['id'].asString;
     logger.fine('get conversation parameters $conversationId');
-    final conversation = await _getConversationById.request(GetConversationByIdParameters(project.id, conversationId, true));
+    final conversation = await _getConversationById.request(GetConversationByIdParameters(projectInformations.key, conversationId, true));
     if (conversation == null) {
       logger.warning('Conversation $conversationId not found');
       logger.info('getConversationDetail took ${sw.elapsed}');
@@ -240,7 +259,7 @@ class Realtime {
     final conversationId = parameters['conversationId'].asString;
     final text = parameters['text'].asStringOr(null);
     logger.fine('send message parameters $conversationId $text');
-    final conversation = await _getConversationById.request(GetConversationByIdParameters(project.id, conversationId, false));
+    final conversation = await _getConversationById.request(GetConversationByIdParameters(projectInformations.key, conversationId, false));
     if (conversation == null) {
       logger.warning('Conversation $conversationId not found');
       logger.info('sendMessage took ${sw.elapsed}');
@@ -252,15 +271,16 @@ class Realtime {
       MessageStateByUser(user.id, MessageState.seen),
       ...others.map((value) => MessageStateByUser(value, MessageState.sent)),
     ];
-    final numberOfMessage = await _getNumberOfMessageForConversation.request(GetNumberOfMessageForConversationParameter(project.id, conversationId));
-    final messageId = await _saveMessage.request(SaveMessageParameters(project.id, conversationId, user.id, text, messageState));
-    final message = Message(project.id, '$messageId', conversationId, user.id, text, _dateTimeFactory(), messageState);
+    final numberOfMessage =
+        await _getNumberOfMessageForConversation.request(GetNumberOfMessageForConversationParameter(projectInformations.key, conversationId));
+    final messageId = await _saveMessage.request(SaveMessageParameters(projectInformations.key, conversationId, user.id, text, messageState));
+    final message = Message(projectInformations.key, '$messageId', conversationId, user.id, text, _dateTimeFactory(), messageState);
     logger.fine('send message $message');
     final connectedOthers = [
       ..._connectedUsers.where((element) => others.contains(element.id)),
       ..._connectedUsers.where((element) => element.id == user.id).where((element) => element.peer != user.peer)
     ];
-    await _updateConversationLastUpdate.request(UpdateConversationLastUpdateParameters(project.id, conversationId));
+    await _updateConversationLastUpdate.request(UpdateConversationLastUpdateParameters(projectInformations.key, conversationId));
     conversation.messages.add(message);
     var createConversation = false;
     if (numberOfMessage == 0 && others.length == 1 && connectedOthers.isNotEmpty) {
@@ -277,13 +297,15 @@ class Realtime {
         other.receiveMessage(conversation.id, messageJson);
       }
     }
-    if (project.webhook != null) {
+    final project = await _getProjectByKey.request(projectInformations.key);
+    final _projectInformations = projectInformations.key == project.production.key ? project.production : project.development;
+    if (_projectInformations.webhook != null) {
       runZoned(
         () {
-          _httpClient.post(project.webhook, body: json.encode(messageJson));
+          _httpClient.post(_projectInformations.webhook, body: json.encode(messageJson));
         },
         zoneSpecification: ZoneSpecification(handleUncaughtError: (_, __, ___, ____, _____) {
-          logger.warning('${project.webhook} is failing');
+          logger.warning('${_projectInformations.webhook} is failing');
         }),
       );
     }
@@ -297,7 +319,7 @@ class Realtime {
     final messageId = int.parse(parameters['id'].asString);
     final stateData = parameters['state'].asInt;
     logger.fine('update message state parameters $messageId $stateData');
-    var message = await _getMessageById.request(GetMessageByIdParameters(project.id, messageId));
+    var message = await _getMessageById.request(GetMessageByIdParameters(projectInformations.key, messageId));
     if (message == null) {
       logger.warning('Message $messageId not found');
       logger.info('sendMessage took ${sw.elapsed}');
@@ -317,8 +339,8 @@ class Realtime {
       userMessageState,
     ];
     logger.fine('new states $newStates');
-    message = await _updateMessageState.request(UpdateMessageStateParameters(project.id, message.conversationId, messageId, newStates));
-    final conversation = await _getConversationById.request(GetConversationByIdParameters(project.id, message.conversationId, false));
+    message = await _updateMessageState.request(UpdateMessageStateParameters(projectInformations.key, message.conversationId, messageId, newStates));
+    final conversation = await _getConversationById.request(GetConversationByIdParameters(projectInformations.key, message.conversationId, false));
     final others = conversation.users.where((element) => element != user.id).toList();
     final connectedOthers = [
       ..._connectedUsers.where((element) => others.contains(element.id)),
