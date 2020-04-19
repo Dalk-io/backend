@@ -7,6 +7,7 @@ import 'package:backend/src/models/message.dart';
 import 'package:backend/src/models/project.dart';
 import 'package:backend/src/models/user.dart';
 import 'package:backend/src/rpc/conversation/get_conversation_by_id.dart';
+import 'package:backend/src/rpc/conversation/get_number_of_message_for_conversation.dart';
 import 'package:backend/src/rpc/conversation/parameters.dart';
 import 'package:backend/src/rpc/conversation/save_conversation.dart';
 import 'package:backend/src/rpc/conversation/update_conversation_last_update.dart';
@@ -37,6 +38,7 @@ class Realtime {
   final GetConversationsForUser _getConversationsForUser;
   final GetMessagesForConversation _getMessagesForConversation;
   final UpdateConversationLastUpdate _updateConversationLastUpdate;
+  final GetNumberOfMessageForConversation _getNumberOfMessageForConversation;
   final SaveMessage _saveMessage;
   final GetMessageById _getMessageById;
   final UpdateMessageState _updateMessageState;
@@ -55,6 +57,7 @@ class Realtime {
     this._getConversationById,
     this._saveConversation,
     this._updateConversationLastUpdate,
+    this._getNumberOfMessageForConversation,
     this._getConversationsForUser,
     this._saveMessage,
     this._getMessageById,
@@ -255,12 +258,12 @@ class Realtime {
       ..._connectedUsers.where((element) => element.id == user.id).where((element) => element.peer != user.peer)
     ];
     await _updateConversationLastUpdate.request(UpdateConversationLastUpdateParameters(project.id, conversationId));
+    final numberOfMessage = await _getNumberOfMessageForConversation.request(GetNumberOfMessageForConversationParameter(project.id, conversationId));
     conversation.messages.add(message);
     var createConversation = false;
-    if (conversation.messages.length == 1 && others.length == 1 && connectedOthers.isNotEmpty) {
+    if (numberOfMessage == 0 && others.length == 1 && connectedOthers.isNotEmpty) {
       for (final otherUsers in connectedOthers) {
         logger.fine('created conversation $conversation for user ${otherUsers.id}');
-        logger.finest(json.encode(conversation.toJson(putMessages: true)));
         otherUsers.onConversationCreated(conversation.toJson(putMessages: true));
       }
       createConversation = true;

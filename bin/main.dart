@@ -27,6 +27,7 @@ void main(List<String> arguments) async {
   final saveConversationToDatabase = SaveConversationToDatabase(postgresPool);
   final updateConversationLastUpdateToDatabase = UpdateConversationLastUpdateToDatabase(postgresPool);
   final updateConversationSubjectAndAvatarToDatabase = UpdateConversationSubjectAndAvatarToDatabase(postgresPool);
+  final getNumberOfMessageForConversationFromDatabase = GetNumberOfMessageForConversationFromDatabase(postgresPool);
 
   final getConversationsForUserFromDatabase = GetConversationsForUserFromDatabase(postgresPool);
 
@@ -54,7 +55,14 @@ void main(List<String> arguments) async {
   final saveConversation = SaveConversation(saveConversationToDatabase);
   final updateConversationLastUpdate = UpdateConversationLastUpdate(updateConversationLastUpdateToDatabase);
   final updateConversationSubjectAndAvatar = UpdateConversationSubjectAndAvatar(updateConversationSubjectAndAvatarToDatabase);
-  final conversationRpcs = ConversationRpcs(getConversationById, saveConversation, updateConversationLastUpdate, updateConversationSubjectAndAvatar);
+  final getNumberOfMessageForConversation = GetNumberOfMessageForConversation(getNumberOfMessageForConversationFromDatabase);
+  final conversationRpcs = ConversationRpcs(
+    getConversationById,
+    saveConversation,
+    updateConversationLastUpdate,
+    updateConversationSubjectAndAvatar,
+    getNumberOfMessageForConversation,
+  );
 
   final backend = Backend(conversationRpcs, conversationsRpcs, messageRpcs, messagesRpcs, saveContact);
   final server = await shelf_io.serve(

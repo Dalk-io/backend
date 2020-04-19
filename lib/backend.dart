@@ -27,10 +27,13 @@ export 'src/databases/conversation/get_conversation_by_id.dart';
 export 'src/databases/conversation/save_conversation.dart';
 export 'src/databases/conversation/update_conversation_last_update.dart';
 export 'src/databases/conversation/update_conversation_subject_and_avatar.dart';
+export 'src/databases/conversation/get_number_of_message_for_conversation.dart';
+
 export 'src/rpc/conversation/get_conversation_by_id.dart';
 export 'src/rpc/conversation/save_conversation.dart';
 export 'src/rpc/conversation/update_conversation_last_update.dart';
 export 'src/rpc/conversation/update_conversation_subject_and_avatar.dart';
+export 'src/rpc/conversation/get_number_of_message_for_conversation.dart';
 export 'src/rpc/conversation/conversation.dart';
 
 //  contact
