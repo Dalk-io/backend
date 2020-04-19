@@ -1,3 +1,4 @@
+source ~/.bashrc
 cd backend
 pub get
 pub run build_runner build
