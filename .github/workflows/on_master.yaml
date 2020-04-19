@@ -19,12 +19,7 @@ jobs:
           known_hosts: ${{ secrets.KNOWN_HOSTS }}
       - name: Upload backend
         run: |
-          scp -r bin lib pubspec.yaml pubspec.lock root@51.15.215.104:/root/backend
+          scp -r bin lib pubspec.yaml pubspec.lock tools root@51.15.215.104:/root/backend
       - name: Connect to server and launch new version
         run: |
-          ssh root@51.15.215.104 << EOF
-            pub get
-            pub run build_runner build
-            killall dart
-            dart bin/main.dart > backend.log &
-          EOF
+          ssh root@51.15.215.104 '/root/backend/tools/deploy.sh'
