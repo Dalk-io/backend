@@ -32,6 +32,7 @@ jobs:
             cd backend
             /usr/lib/dart/bin/pub get
             /usr/lib/dart/bin/pub run build_runner build
+            cd ..
             killall dart || echo "Process was not running."
-            /usr/lib/dart/bin/dart bin/main.dart > backend.log &
+            /usr/lib/dart/bin/dart backend/bin/main.dart >> backend.log &
           EOF

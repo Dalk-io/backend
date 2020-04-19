@@ -322,7 +322,7 @@ class Realtime {
     var message = await _getMessageById.request(GetMessageByIdParameters(projectInformations.key, messageId));
     if (message == null) {
       logger.warning('Message $messageId not found');
-      logger.info('sendMessage took ${sw.elapsed}');
+      logger.info('updateMessageState took ${sw.elapsed}');
       throw RpcException(HttpStatus.notFound, 'Message not found', data: {'id': messageId});
     }
     final user = _connectedUsers.firstWhere((element) => element.peer == peer, orElse: () => null);
@@ -350,6 +350,6 @@ class Realtime {
       logger.info('update message state $message');
       other.updateMessageState(message.conversationId, message.toJson());
     }
-    logger.info('sendMessage took ${sw.elapsed}');
+    logger.info('updateMessageState took ${sw.elapsed}');
   }
 }
