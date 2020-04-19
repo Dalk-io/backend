@@ -164,7 +164,6 @@ class Realtime {
     final to = parameters['users'].asList.cast<String>()..removeWhere((element) => element == user.id);
     final project = await _getProjectByKey.request(projectInformations.key);
     final _projectInformations = projectInformations.key == project.production.key ? project.production : project.development;
-    print(_projectInformations.groupLimitation);
     if (_projectInformations.groupLimitation != -1 && to.length + 1 > _projectInformations.groupLimitation) {
       throw RpcException(HttpStatus.unauthorized, 'Group conversation limit',
           data: {'groupLimitation': _projectInformations.groupLimitation, 'groupSize': to.length});
