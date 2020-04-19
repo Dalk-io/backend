@@ -8,7 +8,7 @@ class GetNumberOfMessageForConversationFromDatabase extends DatabaseEndpoint<Get
           pgPool,
           (input) => pgPool.query(
             'SELECT COUNT(*) FROM messages WHERE projectId = @projectId AND conversationId = @conversationId',
-            substitutionValues: <String, dynamic>{'projectId': input.projectId, 'converstionId': input.conversationId},
+            substitutionValues: <String, dynamic>{'projectId': input.projectId, 'conversationId': input.conversationId},
           ),
         );
 }
