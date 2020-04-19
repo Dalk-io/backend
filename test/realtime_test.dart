@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:backend/backend.dart';
 import 'package:backend/src/api_v1/projects/realtime.dart';
 import 'package:backend/src/models/conversation.dart';
 import 'package:backend/src/models/message.dart';
