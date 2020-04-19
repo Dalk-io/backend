@@ -85,7 +85,7 @@ void main() {
     test('with existing conversation', () async {
       final getConversationById = GetConversationByIdMock();
       final updateConversationSubjectAndAvatar = UpdateConversationSubjectAndAvatarParametersMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('1', null, null, {'1'}, {'1', '2'}));
+      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('1', null, null, {'1'}, {'1', '2'}, false));
       final realtime = Realtime(
           ProjectInformations('toto', null), updateConversationSubjectAndAvatar, getConversationById, null, null, null, null, null, null, null, null, null);
       final peer = PeerMock();
@@ -178,7 +178,7 @@ void main() {
 
     test('get conversation', () async {
       final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('1', null, null, {'1'}, {'1', '2'}));
+      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('1', null, null, {'1'}, {'1', '2'}, false));
       final realtime = Realtime(ProjectInformations('toto', null), null, getConversationById, null, null, null, null, null, null, null, null, null);
       final peer = PeerMock();
       realtime.addPeer(peer);
@@ -237,7 +237,7 @@ void main() {
 
     test('get conversation with subject', () async {
       final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('1', 'Test subject', null, {'1'}, {'1', '2'}));
+      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('1', 'Test subject', null, {'1'}, {'1', '2'}, false));
       final realtime = Realtime(ProjectInformations('toto', null), null, getConversationById, null, null, null, null, null, null, null, null, null);
       final peer = PeerMock();
       realtime.addPeer(peer);
@@ -261,7 +261,7 @@ void main() {
 
     test('get conversation with avatar', () async {
       final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('1', null, 'https://avatarturl.com', {'1'}, {'1', '2'}));
+      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('1', null, 'https://avatarturl.com', {'1'}, {'1', '2'}, false));
       final realtime = Realtime(ProjectInformations('toto', null), null, getConversationById, null, null, null, null, null, null, null, null, null);
       final peer = PeerMock();
       realtime.addPeer(peer);
@@ -816,7 +816,7 @@ void main() {
             [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.seen)]),
       );
       final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}));
+      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}, false));
       final realtime =
           Realtime(ProjectInformations('toto', null), null, getConversationById, null, null, null, null, null, getMessageById, udpateMessageState, null, null);
       final peer = PeerMock();
@@ -850,7 +850,7 @@ void main() {
             [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.seen)]),
       );
       final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}));
+      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}, false));
       final realtime =
           Realtime(ProjectInformations('toto', null), null, getConversationById, null, null, null, null, null, getMessageById, udpateMessageState, null, null);
       final peer = PeerMock();
