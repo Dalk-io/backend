@@ -27,3 +27,11 @@ abstract class UpdateConversationSubjectAndAvatarParameters with _$UpdateConvers
     @nullable String avatar,
   ) = _UpdateConversationSubjectAndAvatarParameters;
 }
+
+@freezed
+abstract class GetNumberOfMessageForConversationParameter with _$GetNumberOfMessageForConversationParameter {
+  const factory GetNumberOfMessageForConversationParameter(
+    String projectId,
+    String conversationId,
+  ) = _GetNumberOfMessageForConversationParameter;
+}

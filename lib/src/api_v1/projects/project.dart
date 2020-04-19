@@ -61,6 +61,7 @@ class ProjectService {
         _conversationRpcs.getConversationById,
         _conversationRpcs.saveConversation,
         _conversationRpcs.updateConversationLastUpdate,
+        _conversationRpcs.getNumberOfMessageForConversation,
         _conversationsRpcs.getConversationsForUser,
         _messageRpcs.saveMessage,
         _messageRpcs.getMessageById,

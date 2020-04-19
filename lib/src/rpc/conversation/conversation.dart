@@ -1,3 +1,4 @@
+import 'package:backend/backend.dart';
 import 'package:backend/src/rpc/conversation/get_conversation_by_id.dart';
 import 'package:backend/src/rpc/conversation/save_conversation.dart';
 import 'package:backend/src/rpc/conversation/update_conversation_last_update.dart';
@@ -10,6 +11,13 @@ class ConversationRpcs {
   final SaveConversation saveConversation;
   final UpdateConversationLastUpdate updateConversationLastUpdate;
   final UpdateConversationSubjectAndAvatar updateConversationSubjectAndAvatar;
+  final GetNumberOfMessageForConversation getNumberOfMessageForConversation;
 
-  ConversationRpcs(this.getConversationById, this.saveConversation, this.updateConversationLastUpdate, this.updateConversationSubjectAndAvatar);
+  ConversationRpcs(
+    this.getConversationById,
+    this.saveConversation,
+    this.updateConversationLastUpdate,
+    this.updateConversationSubjectAndAvatar,
+    this.getNumberOfMessageForConversation,
+  );
 }
