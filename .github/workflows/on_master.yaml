@@ -22,8 +22,9 @@ jobs:
           scp -r bin lib pubspec.yaml pubspec.lock root@51.15.215.104:/root/backend
       - name: Connect to server and launch new version
         run: |
-          ssh root@51.15.215.104
-          pub get
-          killall dart
-          dart bin/main.dart > backend.log &
-          exit
+          ssh root@51.15.215.104 << EOF
+            pub get
+            pub run build_runner build
+            killall dart
+            dart bin/main.dart > backend.log &
+          EOF
