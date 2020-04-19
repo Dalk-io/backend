@@ -1,0 +1,27 @@
+name: CD on master
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: google/dart:latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: pub get
+      - name: Upload backend
+        run: |
+          scp -r bin lib pubspec.yaml pubspec.lock root@51.15.215.104:/root/backend
+      - name: Connect to server and launch new version
+        run: |
+          ssh root@51.15.215.104
+          pub get
+          killall dart
+          dart bin/main.dart > backend.log &
+          exit
