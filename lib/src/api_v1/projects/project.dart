@@ -43,7 +43,6 @@ class ProjectService {
 
   @Route.get('/<id>/ws')
   FutureOr<Response> project(Request request) => Pipeline()
-      // .addMiddleware(addAuthorizedProjectMiddleware(_authorizedIds))
       .addMiddleware(checkProjectExistMiddleware(_getProjectByKey))
       .addHandler((request) => webSocketHandler((WebSocketChannel websocket) => onWebSocket(request, websocket))(request))(request);
 
