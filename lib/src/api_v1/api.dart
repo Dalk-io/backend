@@ -8,6 +8,7 @@ import 'package:backend/src/rpc/conversation/conversation.dart';
 import 'package:backend/src/rpc/conversations/conversations.dart';
 import 'package:backend/src/rpc/message/message.dart';
 import 'package:backend/src/rpc/messages/messages.dart';
+import 'package:backend/src/rpc/project/get_project_by_key.dart';
 import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
 import 'package:shelf/shelf.dart';
@@ -21,15 +22,16 @@ class ApiV1 {
   final ConversationsRpcs _conversationsRpcs;
   final MessageRpcs _messageRpcs;
   final MessagesRpcs _messagesRpcs;
+  final GetProjectByKey _getProjectByKey;
 
   final SaveContact _saveContact;
 
   final _logger = Logger('ApiV1');
 
-  ApiV1(this._conversationRpcs, this._conversationsRpcs, this._messageRpcs, this._messagesRpcs, this._saveContact);
+  ApiV1(this._conversationRpcs, this._conversationsRpcs, this._messageRpcs, this._messagesRpcs, this._saveContact, this._getProjectByKey);
 
   @Route.mount('/projects/')
-  Router get _projectService => ProjectService(_conversationRpcs, _conversationsRpcs, _messageRpcs, _messagesRpcs).router;
+  Router get _projectService => ProjectService(_conversationRpcs, _conversationsRpcs, _messageRpcs, _messagesRpcs, _getProjectByKey).router;
 
   Router get router => _$ApiV1Router(this);
 

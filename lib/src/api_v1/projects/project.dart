@@ -5,9 +5,9 @@ import 'package:backend/src/rpc/conversation/conversation.dart';
 import 'package:backend/src/rpc/conversations/conversations.dart';
 import 'package:backend/src/rpc/message/message.dart';
 import 'package:backend/src/rpc/messages/messages.dart';
-import 'package:backend/src/middlewares/add_authorized_project.dart';
 import 'package:backend/src/middlewares/check_project_exist.dart';
 import 'package:backend/src/models/project.dart';
+import 'package:backend/src/rpc/project/get_project_by_key.dart';
 import 'package:json_rpc_2/json_rpc_2.dart';
 import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
@@ -27,16 +27,14 @@ class ProjectService {
   final ConversationsRpcs _conversationsRpcs;
   final MessageRpcs _messageRpcs;
   final MessagesRpcs _messagesRpcs;
+  final GetProjectByKey _getProjectByKey;
 
   final Map<String, Realtime> _realtimes = <String, Realtime>{};
-  final _authorizedIds = <Project>[
-    Project('dalk_dev_test_project', 'http://localhost:8081/'),
-    Project('dalk_test_hadrien-3901329847239577127515', null),
-  ];
   final _logger = Logger('ProjectService');
   final PeerFactory peerFactory;
 
-  ProjectService(this._conversationRpcs, this._conversationsRpcs, this._messageRpcs, this._messagesRpcs, {this.peerFactory = _peerFactory});
+  ProjectService(this._conversationRpcs, this._conversationsRpcs, this._messageRpcs, this._messagesRpcs, this._getProjectByKey,
+      {this.peerFactory = _peerFactory});
 
   Router get router => _$ProjectServiceRouter(this);
 
@@ -45,18 +43,18 @@ class ProjectService {
 
   @Route.get('/<id>/ws')
   FutureOr<Response> project(Request request) => Pipeline()
-      .addMiddleware(addAuthorizedProjectMiddleware(_authorizedIds))
-      .addMiddleware(checkProjectExistMiddleware)
+      // .addMiddleware(addAuthorizedProjectMiddleware(_authorizedIds))
+      .addMiddleware(checkProjectExistMiddleware(_getProjectByKey))
       .addHandler((request) => webSocketHandler((WebSocketChannel websocket) => onWebSocket(request, websocket))(request))(request);
 
   Future<void> onWebSocket(Request request, WebSocketChannel websocket) async {
     final logger = Logger('${_logger.name}.onWebSocket');
     final peer = peerFactory(websocket);
-    final project = request.context['project'] as Project;
+    final projectInformations = request.context['projectInformations'] as ProjectInformations;
     _realtimes.putIfAbsent(
-      project.id,
+      projectInformations.key,
       () => Realtime(
-        project,
+        projectInformations,
         _conversationRpcs.updateConversationSubjectAndAvatar,
         _conversationRpcs.getConversationById,
         _conversationRpcs.saveConversation,
@@ -67,17 +65,18 @@ class ProjectService {
         _messageRpcs.getMessageById,
         _messageRpcs.updateMessageState,
         _messagesRpcs.getMessagesForConversation,
+        _getProjectByKey,
       ),
     );
-    final realtime = _realtimes[project.id];
+    final realtime = _realtimes[projectInformations.key];
     realtime.addPeer(peer);
     logger.info('Number of connected peers ${realtime.connectedPeers.length}');
     await peer.listen();
     realtime.removePeer(peer);
     logger.info('Number of connected peers ${realtime.connectedPeers.length}');
     if (realtime.connectedPeers.isEmpty) {
-      logger.info('Remove project ${project.id}');
-      _realtimes.remove(project.id);
+      logger.info('Remove project ${projectInformations.key}');
+      _realtimes.remove(projectInformations.key);
     }
   }
 }

@@ -1,9 +1,24 @@
-import 'package:meta/meta.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-@immutable
-class Project {
-  final String id;
+part 'project.freezed.dart';
+
+@freezed
+abstract class _ProjectBase with _$_ProjectBase {
+  const factory _ProjectBase({
+    @required String name,
+    @required ProjectInformations production,
+    @required ProjectInformations development,
+  }) = Project;
+}
+
+class ProjectInformations {
+  final String key;
+  final String secret;
   final String webhook;
+  final int groupLimitation;
 
-  Project(this.id, this.webhook);
+  ProjectInformations(this.key, this.secret, {this.webhook, this.groupLimitation = -1});
+
+  @override
+  String toString() => 'ProjectInformations{ $key, $secret, $groupLimitation, $webhook }';
 }

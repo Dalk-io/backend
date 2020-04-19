@@ -38,6 +38,8 @@ void main(List<String> arguments) async {
 
   final getMessagesForConversationFromDatabase = GetMessagesForConversationFromDatabase(postgresPool);
 
+  final getProjectByKeyFromDatabase = GetProjectByKeyFromDatabase(postgresPool);
+
   final saveContact = SaveContact(saveContactToDatabase);
 
   final getMessagesForConversation = GetMessagesForConversation(getMessagesForConversationFromDatabase);
@@ -64,7 +66,9 @@ void main(List<String> arguments) async {
     getNumberOfMessageForConversation,
   );
 
-  final backend = Backend(conversationRpcs, conversationsRpcs, messageRpcs, messagesRpcs, saveContact);
+  final getProjectByKey = GetProjectByKey(getProjectByKeyFromDatabase);
+
+  final backend = Backend(conversationRpcs, conversationsRpcs, messageRpcs, messagesRpcs, saveContact, getProjectByKey);
   final server = await shelf_io.serve(
     backend.handler,
     '0.0.0.0',
