@@ -19,10 +19,14 @@ import 'package:backend/src/rpc/message/save_message.dart';
 import 'package:backend/src/rpc/message/update_message_state.dart';
 import 'package:backend/src/rpc/messages/get_messages_for_conversation.dart';
 import 'package:backend/src/rpc/messages/parameters.dart';
+import 'package:http/io_client.dart';
 import 'package:json_rpc_2/json_rpc_2.dart';
 import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
-import 'package:http/http.dart' as http;
+
+typedef DateTimeFactory = DateTime Function();
+
+DateTime _defaultDateTimeFactory() => DateTime.now().toUtc();
 
 @immutable
 class Realtime {
@@ -40,8 +44,10 @@ class Realtime {
   final List<String> _users = [];
   final List<Peer> _connectedPeers = [];
   final List<User> _connectedUsers = [];
+  final DateTimeFactory _dateTimeFactory;
 
   final Logger _logger;
+  final IOClient _httpClient;
 
   Realtime(
     this.project,
@@ -53,8 +59,12 @@ class Realtime {
     this._saveMessage,
     this._getMessageById,
     this._updateMessageState,
-    this._getMessagesForConversation,
-  ) : _logger = Logger('Realtime-${project.id}');
+    this._getMessagesForConversation, {
+    DateTimeFactory dateTimeFactory,
+    IOClient httpClient,
+  })  : _logger = Logger('Realtime-${project.id}'),
+        _httpClient = httpClient ?? IOClient(),
+        _dateTimeFactory = dateTimeFactory ?? _defaultDateTimeFactory;
 
   List<Peer> get connectedPeers => _connectedPeers;
 
@@ -238,7 +248,7 @@ class Realtime {
       ...others.map((value) => MessageStateByUser(value, MessageState.sent)),
     ];
     final messageId = await _saveMessage.request(SaveMessageParameters(project.id, conversationId, user.id, text, messageState));
-    final message = Message(project.id, '$messageId', conversationId, user.id, text, DateTime.now().toUtc(), messageState);
+    final message = Message(project.id, '$messageId', conversationId, user.id, text, _dateTimeFactory(), messageState);
     logger.fine('send message $message');
     final connectedOthers = [
       ..._connectedUsers.where((element) => others.contains(element.id)),
@@ -246,19 +256,26 @@ class Realtime {
     ];
     await _updateConversationLastUpdate.request(UpdateConversationLastUpdateParameters(project.id, conversationId));
     conversation.messages.add(message);
+    var createConversation = false;
     if (conversation.messages.length == 1 && others.length == 1 && connectedOthers.isNotEmpty) {
-      logger.fine('created conversation $conversation for user ${connectedOthers.first.id}');
-      connectedOthers.first.onConversationCreated(conversation.toJson(putMessages: true));
+      for (final otherUsers in connectedOthers) {
+        logger.fine('created conversation $conversation for user ${otherUsers.id}');
+        logger.finest(json.encode(conversation.toJson(putMessages: true)));
+        otherUsers.onConversationCreated(conversation.toJson(putMessages: true));
+      }
+      createConversation = true;
     }
     final messageJson = message.toJson();
-    for (final other in connectedOthers) {
-      logger.fine('send message to user ${other.id}');
-      other.receiveMessage(conversation.id, messageJson);
+    if (!createConversation) {
+      for (final other in connectedOthers) {
+        logger.fine('send message to user ${other.id}');
+        other.receiveMessage(conversation.id, messageJson);
+      }
     }
     if (project.webhook != null) {
       runZoned(
         () {
-          http.post(project.webhook, body: json.encode(messageJson));
+          _httpClient.post(project.webhook, body: json.encode(messageJson));
         },
         zoneSpecification: ZoneSpecification(handleUncaughtError: (_, __, ___, ____, _____) {
           logger.warning('${project.webhook} is failing');

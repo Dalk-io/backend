@@ -1,7 +1,9 @@
 import 'package:backend/backend.dart';
 import 'package:backend/src/endpoint.dart';
 import 'package:backend/src/rpc/message/parameters.dart';
+import 'package:meta/meta.dart';
 
+@immutable
 class SaveMessage extends Endpoint<SaveMessageParameters, int> {
   final SaveMessageToDatabase _saveMessageToDatabase;
 
