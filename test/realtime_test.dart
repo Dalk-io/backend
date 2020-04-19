@@ -17,7 +17,9 @@ import 'mocks/rpc/conversation/save_conversation.dart';
 import 'mocks/rpc/conversation/update_conversation_last_update.dart';
 import 'mocks/rpc/conversation/update_conversation_subject_and_avatar.dart';
 import 'mocks/rpc/conversations/get_conversations_for_user.dart';
+import 'mocks/rpc/message/get_message_by_id.dart';
 import 'mocks/rpc/message/save_message.dart';
+import 'mocks/rpc/message/update_message_state.dart';
 import 'mocks/rpc/messages/get_messages_for_conversation.dart';
 
 void main() {
@@ -574,6 +576,99 @@ void main() {
         }),
         isTrue,
       );
+    });
+  });
+
+  group('update message state', () {
+    test('message not found', () async {
+      final getMessageById = GetMessageByIdMock();
+      when(getMessageById.request(any)).thenAnswer((_) async => null);
+      final peer = PeerMock();
+      final realtime = Realtime(Project('toto', null), null, null, null, null, null, null, getMessageById, null, null);
+      realtime.addPeer(peer);
+      realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+      try {
+        await realtime.updateMessageState(Parameters('updateMessageState', {'id': '1', 'state': 2}), peer);
+      } on RpcException catch (e) {
+        expect(e.code, HttpStatus.notFound);
+      }
+    });
+
+    test('seen to sent', () async {
+      final getMessageById = GetMessageByIdMock();
+      when(getMessageById.request(any)).thenAnswer(
+        (_) async => Message('toto', '1', '12', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30), [
+          MessageStateByUser('1', MessageState.seen),
+        ]),
+      );
+      final realtime = Realtime(Project('toto', null), null, null, null, null, null, null, getMessageById, null, null);
+      final peer = PeerMock();
+      realtime.addPeer(peer);
+      realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+      try {
+        await realtime.updateMessageState(Parameters('updateMessageState', {'id': '1', 'state': MessageState.sent.index}), peer);
+      } on RpcException catch (e) {
+        expect(e.code, HttpStatus.preconditionFailed);
+        expect(e.message, 'Cannot change state');
+        expect(e.data, {'oldState': 2, 'newState': 0});
+      }
+    });
+
+    test('sent to seen', () async {
+      final getMessageById = GetMessageByIdMock();
+      when(getMessageById.request(any)).thenAnswer(
+        (_) async => Message('toto', '1', '12', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30),
+            [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.sent)]),
+      );
+      final udpateMessageState = UpdateMessageStateMock();
+      when(udpateMessageState.request(any)).thenAnswer(
+        (_) async => Message('toto', '1', '12', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30),
+            [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.seen)]),
+      );
+      final getConversationById = GetConversationByIdMock();
+      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}));
+      final realtime = Realtime(Project('toto', null), null, getConversationById, null, null, null, null, getMessageById, udpateMessageState, null);
+      final peer = PeerMock();
+      realtime.addPeer(peer);
+      realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+      final other = PeerMock();
+      realtime.addPeer(other);
+      realtime.registerUser(Parameters('registerUser', {'id': '2'}), other);
+      await realtime.updateMessageState(Parameters('updateMessageState', {'id': '2', 'state': MessageState.seen.index}), other);
+      verify(peer.sendRequest('updateMessageState12', {
+        'id': '1',
+        'senderId': '1',
+        'text': 'Hello world',
+        'timestamp': '2020-01-01T14:30:00.000Z',
+        'state': 2,
+        'stateDetails': [
+          {'userId': '2', 'state': 2}
+        ]
+      })).called(1);
+    });
+
+    test('seen to seen', () async {
+      final getMessageById = GetMessageByIdMock();
+      when(getMessageById.request(any)).thenAnswer(
+        (_) async => Message('toto', '1', '12', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30),
+            [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.seen)]),
+      );
+      final udpateMessageState = UpdateMessageStateMock();
+      when(udpateMessageState.request(any)).thenAnswer(
+        (_) async => Message('toto', '1', '12', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30),
+            [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.seen)]),
+      );
+      final getConversationById = GetConversationByIdMock();
+      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}));
+      final realtime = Realtime(Project('toto', null), null, getConversationById, null, null, null, null, getMessageById, udpateMessageState, null);
+      final peer = PeerMock();
+      realtime.addPeer(peer);
+      realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+      final other = PeerMock();
+      realtime.addPeer(other);
+      realtime.registerUser(Parameters('registerUser', {'id': '2'}), other);
+      await realtime.updateMessageState(Parameters('updateMessageState', {'id': '2', 'state': MessageState.seen.index}), other);
+      verifyNever(peer.sendRequest('updateMessageState12', any));
     });
   });
 }
