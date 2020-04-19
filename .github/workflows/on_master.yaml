@@ -8,13 +8,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container:
-      image: google/dart:latest
 
     steps:
       - uses: actions/checkout@v2
-      - name: Install dependencies
-        run: pub get
       - name: Upload backend
         run: |
           scp -r bin lib pubspec.yaml pubspec.lock root@51.15.215.104:/root/backend
