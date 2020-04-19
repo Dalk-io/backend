@@ -24,7 +24,8 @@ void main() async {
   developmentKey TEXT NOT NULL,
   developmentSecret TEXT NOt NULL,
   developmentWebhook TEXT,
-  groupLimitation int NOT NULL
+  groupLimitation int NOT NULL,
+  secure boolean NOT NULL
 )''');
 
   await pg.execute('CREATE TABLE IF NOT EXISTS users (projectId TEXT NOT NULL, id TEXT NOT NULL, name TEXT, avatar TEXT);');

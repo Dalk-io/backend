@@ -16,9 +16,10 @@ class ProjectInformations {
   final String secret;
   final String webhook;
   final int groupLimitation;
+  final bool secure;
 
-  ProjectInformations(this.key, this.secret, {this.webhook, this.groupLimitation = -1});
+  ProjectInformations(this.key, this.secret, {this.webhook, this.groupLimitation = -1, this.secure = false});
 
   @override
-  String toString() => 'ProjectInformations{ $key, $secret, $groupLimitation, $webhook }';
+  String toString() => 'ProjectInformations{ $key, $secret, $groupLimitation, $webhook, $secure }';
 }

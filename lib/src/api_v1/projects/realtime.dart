@@ -21,6 +21,7 @@ import 'package:backend/src/rpc/message/save_message.dart';
 import 'package:backend/src/rpc/message/update_message_state.dart';
 import 'package:backend/src/rpc/messages/get_messages_for_conversation.dart';
 import 'package:backend/src/rpc/messages/parameters.dart';
+import 'package:crypto/crypto.dart';
 import 'package:http/io_client.dart';
 import 'package:json_rpc_2/json_rpc_2.dart';
 import 'package:logging/logging.dart';
@@ -108,10 +109,19 @@ class Realtime {
     _connectedPeers.remove(peer);
   }
 
-  bool registerUser(Parameters parameters, Peer peer) {
+  Future<bool> registerUser(Parameters parameters, Peer peer) async {
     final sw = Stopwatch()..start();
     final logger = Logger('${_logger.name}.registerUser');
     final id = parameters['id'].asString;
+    final signature = parameters['signature'].asStringOr(null);
+    final project = await _getProjectByKey.request(projectInformations.key);
+    final _projectInformations = projectInformations.key == project.production.key ? project.production : project.development;
+    if (_projectInformations.secure) {
+      final _signature = sha512.convert(utf8.encode('$id${_projectInformations.secret}')).toString();
+      if (signature != _signature) {
+        throw RpcException(HttpStatus.unauthorized, 'Invalid signature');
+      }
+    }
     logger.fine('register user $id');
     _connectedUsers.add(User(id, peer));
     _users.add(id);

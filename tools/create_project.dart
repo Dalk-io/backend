@@ -24,6 +24,7 @@ void main(List<String> arguments) async {
 
   final uuid = Uuid(options: <String, dynamic>{'grng': UuidUtil.cryptoRNG});
   final groupLimitation = -1;
+  final secure = true;
   final projectName = arguments.first;
 
   final prodKey = '${projectName}_prod_${uuid.v1(options: <String, dynamic>{
@@ -46,11 +47,13 @@ void main(List<String> arguments) async {
       prodKey,
       prodSecret,
       groupLimitation: groupLimitation,
+      secure: secure,
     ),
     development: ProjectInformations(
       devKey,
       devSecret,
       groupLimitation: groupLimitation,
+      secure: secure,
     ),
   );
 
@@ -65,8 +68,9 @@ void main(List<String> arguments) async {
   developmentKey,
   developmentSecret,
   developmentWebhook,
-  groupLimitation
-) VALUES (@name, @productionKey, @productionSecret, @productionWebhook, @developmentKey, @developmentSecret, @developmentWebhook, @groupLimitation)''',
+  groupLimitation,
+  secure
+) VALUES (@name, @productionKey, @productionSecret, @productionWebhook, @developmentKey, @developmentSecret, @developmentWebhook, @groupLimitation, @secure)''',
     substitutionValues: <String, dynamic>{
       'name': project.name,
       'productionKey': project.production.key,
@@ -76,6 +80,7 @@ void main(List<String> arguments) async {
       'developmentSecret': project.development.secret,
       'developmentWebhook': project.development.webhook,
       'groupLimitation': project.development.groupLimitation,
+      'secure': project.production.secure,
     },
   );
 
