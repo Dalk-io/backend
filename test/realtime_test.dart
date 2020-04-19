@@ -308,8 +308,16 @@ void main() {
         final getConversationById = GetConversationByIdMock();
         final saveConversation = SaveConversationMock();
         when(getConversationById.request(any)).thenAnswer((_) async => null);
+        final getProjectByKey = GetProjectByKeyMock();
+        when(getProjectByKey.request(any)).thenAnswer(
+          (_) async => Project(
+            name: 'DalkTest',
+            production: ProjectInformations('toto', 'secret'),
+            development: ProjectInformations('toto_dev', 'secret'),
+          ),
+        );
         final realtime =
-            Realtime(ProjectInformations('toto', null), null, getConversationById, saveConversation, null, null, null, null, null, null, null, null);
+            Realtime(ProjectInformations('toto', null), null, getConversationById, saveConversation, null, null, null, null, null, null, null, getProjectByKey);
         final peer = PeerMock();
         final other = PeerMock();
         realtime.addPeer(peer);
@@ -344,8 +352,16 @@ void main() {
         final getConversationById = GetConversationByIdMock();
         final sveConversation = SaveConversationMock();
         when(getConversationById.request(any)).thenAnswer((_) async => null);
+        final getProjectByKey = GetProjectByKeyMock();
+        when(getProjectByKey.request(any)).thenAnswer(
+          (_) async => Project(
+            name: 'DalkTest',
+            production: ProjectInformations('toto', 'secret'),
+            development: ProjectInformations('toto_dev', 'secret'),
+          ),
+        );
         final realtime =
-            Realtime(ProjectInformations('toto', null), null, getConversationById, sveConversation, null, null, null, null, null, null, null, null);
+            Realtime(ProjectInformations('toto', null), null, getConversationById, sveConversation, null, null, null, null, null, null, null, getProjectByKey);
         final peer = PeerMock();
         final other = PeerMock();
         when(other.sendRequest('onConversationCreated', any)).thenAnswer((_) => null);

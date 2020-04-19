@@ -24,24 +24,32 @@ void main(List<String> arguments) async {
 
   final uuid = Uuid(options: <String, dynamic>{'grng': UuidUtil.cryptoRNG});
   final groupLimitation = -1;
+  final projectName = arguments.first;
+
+  final prodKey = '${projectName}_prod_${uuid.v1(options: <String, dynamic>{
+    'positionalArgs': [1]
+  })}';
+  final prodSecret = '${projectName}_prod_${uuid.v1(options: <String, dynamic>{
+    'positionalArgs': [2]
+  })}';
+
+  final devKey = '${projectName}_dev_${uuid.v1(options: <String, dynamic>{
+    'positionalArgs': [4]
+  })}';
+  final devSecret = '${projectName}_dev_${uuid.v1(options: <String, dynamic>{
+    'positionalArgs': [8]
+  })}';
+
   final project = Project(
     name: arguments.first,
     production: ProjectInformations(
-      uuid.v1(options: <String, dynamic>{
-        'positionalArgs': [1]
-      }),
-      uuid.v1(options: <String, dynamic>{
-        'positionalArgs': [2]
-      }),
+      prodKey,
+      prodSecret,
       groupLimitation: groupLimitation,
     ),
     development: ProjectInformations(
-      uuid.v1(options: <String, dynamic>{
-        'positionalArgs': [4]
-      }),
-      uuid.v1(options: <String, dynamic>{
-        'positionalArgs': [8]
-      }),
+      devKey,
+      devSecret,
       groupLimitation: groupLimitation,
     ),
   );
