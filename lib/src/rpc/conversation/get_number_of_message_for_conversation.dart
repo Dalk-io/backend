@@ -12,6 +12,6 @@ class GetNumberOfMessageForConversation extends Endpoint<GetNumberOfMessageForCo
   @override
   Future<int> request(GetNumberOfMessageForConversationParameter input) async {
     final result = await _getNumberOfMessageForConversationFromDatabase.request(input);
-    return result.first as int;
+    return result.first.first as int;
   }
 }
