@@ -303,6 +303,9 @@ class Realtime {
     if (oldUserMessageState.state.index > stateData) {
       throw RpcException(HttpStatus.preconditionFailed, 'Cannot change state', data: {'oldState': oldUserMessageState.state.index, 'newState': stateData});
     }
+    if (oldUserMessageState.state.index == stateData) {
+      return;
+    }
     final userMessageState = MessageStateByUser(user.id, MessageState.values[stateData]);
     final newStates = [
       ...message.states.where((state) => state.id != user.id),

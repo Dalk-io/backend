@@ -594,7 +594,7 @@ void main() {
       }
     });
 
-    test('invalid change state', () async {
+    test('seen to sent', () async {
       final getMessageById = GetMessageByIdMock();
       when(getMessageById.request(any)).thenAnswer(
         (_) async => Message('toto', '1', '12', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30), [
@@ -614,17 +614,19 @@ void main() {
       }
     });
 
-    test('valid', () async {
+    test('sent to seen', () async {
       final getMessageById = GetMessageByIdMock();
       when(getMessageById.request(any)).thenAnswer(
-        (_) async => Message('toto', '1', '12', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30), [MessageStateByUser('2', MessageState.sent)]),
+        (_) async => Message('toto', '1', '12', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30),
+            [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.sent)]),
       );
       final udpateMessageState = UpdateMessageStateMock();
       when(udpateMessageState.request(any)).thenAnswer(
-        (_) async => Message('toto', '1', '12', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30), [MessageStateByUser('2', MessageState.seen)]),
+        (_) async => Message('toto', '1', '12', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30),
+            [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.seen)]),
       );
       final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('1', null, null, {'1'}, {'1', '2'}));
+      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}));
       final realtime = Realtime(Project('toto', null), null, getConversationById, null, null, null, null, getMessageById, udpateMessageState, null);
       final peer = PeerMock();
       realtime.addPeer(peer);
@@ -632,8 +634,8 @@ void main() {
       final other = PeerMock();
       realtime.addPeer(other);
       realtime.registerUser(Parameters('registerUser', {'id': '2'}), other);
-      await realtime.updateMessageState(Parameters('updateMessageState', {'id': '1', 'state': 2}), peer);
-      verify(other.sendRequest('updateMessageState12', {
+      await realtime.updateMessageState(Parameters('updateMessageState', {'id': '2', 'state': MessageState.seen.index}), other);
+      verify(peer.sendRequest('updateMessageState12', {
         'id': '1',
         'senderId': '1',
         'text': 'Hello world',
@@ -643,6 +645,30 @@ void main() {
           {'userId': '2', 'state': 2}
         ]
       })).called(1);
+    });
+
+    test('seen to seen', () async {
+      final getMessageById = GetMessageByIdMock();
+      when(getMessageById.request(any)).thenAnswer(
+        (_) async => Message('toto', '1', '12', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30),
+            [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.seen)]),
+      );
+      final udpateMessageState = UpdateMessageStateMock();
+      when(udpateMessageState.request(any)).thenAnswer(
+        (_) async => Message('toto', '1', '12', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30),
+            [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.seen)]),
+      );
+      final getConversationById = GetConversationByIdMock();
+      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}));
+      final realtime = Realtime(Project('toto', null), null, getConversationById, null, null, null, null, getMessageById, udpateMessageState, null);
+      final peer = PeerMock();
+      realtime.addPeer(peer);
+      realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+      final other = PeerMock();
+      realtime.addPeer(other);
+      realtime.registerUser(Parameters('registerUser', {'id': '2'}), other);
+      await realtime.updateMessageState(Parameters('updateMessageState', {'id': '2', 'state': MessageState.seen.index}), other);
+      verifyNever(peer.sendRequest('updateMessageState12', any));
     });
   });
 }
