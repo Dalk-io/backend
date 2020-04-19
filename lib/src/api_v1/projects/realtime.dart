@@ -171,6 +171,7 @@ class Realtime {
     }
     final subject = parameters['subject'].asStringOr(null);
     final avatar = parameters['avatar'].asStringOr(null);
+    final isGroup = parameters['isGroupd'].asBoolOr(false);
     final conversation = Conversation(
       conversationId,
       subject,
@@ -180,6 +181,7 @@ class Realtime {
         user.id,
         ...to,
       },
+      isGroup,
     );
     logger.fine('create conversations $conversation');
     await _saveConversation.request(SaveConversationParameters(projectInformations.key, conversation));

@@ -63,7 +63,7 @@ void main() {
     test('for users with conversations', () async {
       final getUserConversationsMock = GetConversationsForUserMock();
       when(getUserConversationsMock.request(any)).thenAnswer((_) async => <Conversation>[
-            Conversation('123', null, null, {'1'}, {'1', '2'})
+            Conversation('123', null, null, {'1'}, {'1', '2'}, false)
           ]);
       final realtime = Realtime(ProjectInformations('toto', null), null, null, null, null, null, getUserConversationsMock, null, null, null, null, null);
       final peer = PeerMock();
@@ -407,7 +407,7 @@ void main() {
 
     test('get all message', () async {
       final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}));
+      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}, false));
       final getMessagesForConversation = GetMessagesForConversationMock();
       when(getMessagesForConversation.request(any)).thenAnswer((_) async => [
             Message('toto', '2', '12', '1', 'How are you', DateTime.now(),
@@ -423,7 +423,7 @@ void main() {
 
     test('get last message', () async {
       final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}));
+      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}, false));
       final getMessagesForConversation = GetMessagesForConversationMock();
       when(getMessagesForConversation.request(any)).thenAnswer((_) async => [
             Message('toto', '2', '12', '1', 'How are you', DateTime.now(),
@@ -455,7 +455,7 @@ void main() {
 
     test('valid conversation', () async {
       final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'})
+      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}, false)
         ..messages.addAll([
           Message('toto', '1', '12', '1', 'Hello world!', DateTime.now(), [MessageStateByUser('2', MessageState.sent)]),
         ]));
@@ -485,7 +485,7 @@ void main() {
     group('first message in 1:1 conversation', () {
       test('when other is connected', () async {
         final getConversationById = GetConversationByIdMock();
-        when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}));
+        when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}, false));
         final saveMessage = SaveMessageMock();
         when(saveMessage.request(any)).thenAnswer((_) async => 1);
         final getNumberOfMessageForConversation = GetNumberOfMessageForConversationMock();
@@ -540,7 +540,7 @@ void main() {
 
       test('when other is not connected', () async {
         final getConversationById = GetConversationByIdMock();
-        when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}));
+        when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}, false));
         final saveMessage = SaveMessageMock();
         when(saveMessage.request(any)).thenAnswer((_) async => 1);
         final updateConversationLastUpdate = UpdateConversationLastUpdateMock();
@@ -595,7 +595,7 @@ void main() {
 
     test('1:1 multiple message in conversation', () async {
       final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}));
+      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}, false));
       final saveMessage = SaveMessageMock();
       when(saveMessage.request(any)).thenAnswer((_) async => 1);
       final getNumberOfMessageForConversation = GetNumberOfMessageForConversationMock();
@@ -650,7 +650,7 @@ void main() {
 
     test('first message in group conversation', () async {
       final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('123', null, null, {'1'}, {'1', '2', '3'}));
+      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('123', null, null, {'1'}, {'1', '2', '3'}, true));
       final saveMessage = SaveMessageMock();
       when(saveMessage.request(any)).thenAnswer((_) async => 1);
       final updateConversationLastUpdate = UpdateConversationLastUpdateMock();
@@ -712,7 +712,7 @@ void main() {
 
     test('with webhook', () async {
       final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}));
+      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}, false));
       final saveMessage = SaveMessageMock();
       when(saveMessage.request(any)).thenAnswer((_) async => 1);
       final updateConversationLastUpdate = UpdateConversationLastUpdateMock();
