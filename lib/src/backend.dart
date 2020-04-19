@@ -32,6 +32,9 @@ class Backend {
   @Route.mount('/v1/')
   Router get _api => ApiV1(_conversationRpcs, _conversationsRpcs, _messageRpcs, _messagesRpcs, _saveContact).router;
 
+  @Route.get('/ping')
+  Response ping(Request request) => Response.ok('');
+
   @Route.all('/<ignored|.*>')
   Future<Response> fallback(Request request) async {
     final logger = Logger('${_logger.name}.fallback');

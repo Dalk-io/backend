@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:backend/backend.dart';
 import 'package:backend/src/rpc/contact/save_contact.dart';
 import 'package:logging/logging.dart';
@@ -59,10 +57,11 @@ void main(List<String> arguments) async {
   final conversationRpcs = ConversationRpcs(getConversationById, saveConversation, updateConversationLastUpdate, updateConversationSubjectAndAvatar);
 
   final backend = Backend(conversationRpcs, conversationsRpcs, messageRpcs, messagesRpcs, saveContact);
-  final securityContext = SecurityContext()
-    ..useCertificateChain('/etc/letsencrypt/live/api.dalk.fr/fullchain.pem')
-    ..usePrivateKey('/etc/letsencrypt/live/api.dalk.fr/privkey.pem');
-  final server = await shelf_io.serve(backend.handler, '0.0.0.0', 8080, securityContext: securityContext);
+  final server = await shelf_io.serve(
+    backend.handler,
+    '0.0.0.0',
+    443,
+  );
 
   _logger.info('listening http://${server.address.address}:${server.port}');
 }
