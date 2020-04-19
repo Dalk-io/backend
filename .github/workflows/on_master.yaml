@@ -17,6 +17,12 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           name: id_rsa
           known_hosts: ${{ secrets.KNOWN_HOSTS }}
+      - name: Rm backend folder
+        run: |
+          ssh root@51.15.215.104 'rm -rf backend'
+      - name: Create backend folder
+        run: |
+          ssh root@51.15.215.104 'mkdir backend'
       - name: Upload backend
         run: |
           scp -r bin lib pubspec.yaml pubspec.lock tools root@51.15.215.104:/root/backend
