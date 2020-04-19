@@ -250,6 +250,7 @@ class Realtime {
       MessageStateByUser(user.id, MessageState.seen),
       ...others.map((value) => MessageStateByUser(value, MessageState.sent)),
     ];
+    final numberOfMessage = await _getNumberOfMessageForConversation.request(GetNumberOfMessageForConversationParameter(project.id, conversationId));
     final messageId = await _saveMessage.request(SaveMessageParameters(project.id, conversationId, user.id, text, messageState));
     final message = Message(project.id, '$messageId', conversationId, user.id, text, _dateTimeFactory(), messageState);
     logger.fine('send message $message');
@@ -258,7 +259,6 @@ class Realtime {
       ..._connectedUsers.where((element) => element.id == user.id).where((element) => element.peer != user.peer)
     ];
     await _updateConversationLastUpdate.request(UpdateConversationLastUpdateParameters(project.id, conversationId));
-    final numberOfMessage = await _getNumberOfMessageForConversation.request(GetNumberOfMessageForConversationParameter(project.id, conversationId));
     conversation.messages.add(message);
     var createConversation = false;
     if (numberOfMessage == 0 && others.length == 1 && connectedOthers.isNotEmpty) {
