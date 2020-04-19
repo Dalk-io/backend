@@ -25,7 +25,7 @@ jobs:
           ssh root@51.15.215.104 'mkdir backend'
       - name: Upload backend
         run: |
-          scp -r bin lib pubspec.yaml pubspec.lock tools root@51.15.215.104:/root/backend
+          scp -r bin lib pubspec.yaml pubspec.lock root@51.15.215.104:/root/backend
       - name: Connect to server and launch new version
         run: |
           ssh root@51.15.215.104 /bin/bash << EOF
