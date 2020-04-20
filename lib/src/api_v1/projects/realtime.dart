@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:backend/backend.dart';
@@ -327,11 +328,13 @@ class Realtime {
     }
     final user = _connectedUsers.firstWhere((element) => element.peer == peer, orElse: () => null);
     final oldUserMessageState = message.states.firstWhere((state) => state.id == user.id, orElse: () => null);
-    if (oldUserMessageState.state.index > stateData) {
-      throw RpcException(HttpStatus.preconditionFailed, 'Cannot change state', data: {'oldState': oldUserMessageState.state.index, 'newState': stateData});
-    }
     if (oldUserMessageState.state.index == stateData) {
+      logger.warning('same state, nothing to do');
       return;
+    }
+    if (oldUserMessageState.state.index > stateData) {
+      logger.warning('Cannot change state from ${oldUserMessageState.state.index} to $stateData');
+      throw RpcException(HttpStatus.preconditionFailed, 'Cannot change state', data: {'oldState': oldUserMessageState.state.index, 'newState': stateData});
     }
     final userMessageState = MessageStateByUser(user.id, MessageState.values[stateData]);
     final newStates = [
