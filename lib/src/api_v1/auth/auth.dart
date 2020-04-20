@@ -97,7 +97,6 @@ class AuthService {
       return Response(HttpStatus.conflict, body: json.encode({'message': 'Account already exist', 'data': email}));
     }
     final token = await _login(email, password);
-    //  save token into database
     final uuid = Uuid(options: <String, dynamic>{'grng': UuidUtil.cryptoRNG});
     final developmentKeyUuid = uuid.v1(
       options: <String, dynamic>{
