@@ -35,7 +35,7 @@ class Backend {
   Router get _api => ApiV1(_conversationRpcs, _conversationsRpcs, _messageRpcs, _messagesRpcs, _saveContact, _getProjectByKey).router;
 
   @Route.get('/ping')
-  Response ping(Request request) => Response.ok('');
+  Response ping(Request request) => Response.ok('pong');
 
   @Route.all('/<ignored|.*>')
   Future<Response> fallback(Request request) async {
