@@ -9,10 +9,9 @@ Middleware checkProjectExistMiddleware(GetProjectByKey getProjectByKey) => (Hand
       final logger = Logger('checkProjectExistMiddleware');
       return (request) async {
         final projectId = params(request, 'id');
-        logger.info(projectId);
         final project = await getProjectByKey.request(projectId);
-        logger.info(project);
         if (project == null) {
+          logger.warning('Project $projectId not found');
           return Response.notFound(json.encode({'message': 'Project $projectId not found'}));
         }
         return handler(
