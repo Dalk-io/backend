@@ -46,7 +46,6 @@ void main() {
       final getProjectByKey = GetProjectByKeyMock();
       when(getProjectByKey.request(any)).thenAnswer(
         (_) async => Project(
-          name: 'DalkTest',
           production: ProjectInformations('toto', 'secret', groupLimitation: 2),
           development: ProjectInformations('toto_dev', 'secret'),
         ),
@@ -62,7 +61,6 @@ void main() {
       final getProjectByKey = GetProjectByKeyMock();
       when(getProjectByKey.request(any)).thenAnswer(
         (_) async => Project(
-          name: 'DalkTest',
           production: ProjectInformations('toto', 'mysecret', groupLimitation: 2, secure: true),
           development: ProjectInformations('toto_dev', 'secret'),
         ),
@@ -83,7 +81,6 @@ void main() {
       final getProjectByKey = GetProjectByKeyMock();
       when(getProjectByKey.request(any)).thenAnswer(
         (_) async => Project(
-          name: 'DalkTest',
           production: ProjectInformations('toto', 'secret', groupLimitation: 2),
           development: ProjectInformations('toto_dev', 'secret'),
         ),
@@ -103,7 +100,6 @@ void main() {
       final getProjectByKey = GetProjectByKeyMock();
       when(getProjectByKey.request(any)).thenAnswer(
         (_) async => Project(
-          name: 'DalkTest',
           production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
           development: ProjectInformations('toto_dev', 'secret'),
         ),
@@ -134,7 +130,6 @@ void main() {
       final getProjectByKey = GetProjectByKeyMock();
       when(getProjectByKey.request(any)).thenAnswer(
         (_) async => Project(
-          name: 'DalkTest',
           production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
           development: ProjectInformations('toto_dev', 'secret'),
         ),
@@ -164,7 +159,6 @@ void main() {
       final getProjectByKey = GetProjectByKeyMock();
       when(getProjectByKey.request(any)).thenAnswer(
         (_) async => Project(
-          name: 'DalkTest',
           production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
           development: ProjectInformations('toto_dev', 'secret'),
         ),
@@ -200,7 +194,6 @@ void main() {
       final getProjectByKey = GetProjectByKeyMock();
       when(getProjectByKey.request(any)).thenAnswer(
         (_) async => Project(
-          name: 'DalkTest',
           production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
           development: ProjectInformations('toto_dev', 'secret'),
         ),
@@ -234,7 +227,6 @@ void main() {
       final getProjectByKey = GetProjectByKeyMock();
       when(getProjectByKey.request(any)).thenAnswer(
         (_) async => Project(
-          name: 'DalkTest',
           production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
           development: ProjectInformations('toto_dev', 'secret'),
         ),
@@ -260,7 +252,6 @@ void main() {
       final getProjectByKey = GetProjectByKeyMock();
       when(getProjectByKey.request(any)).thenAnswer(
         (_) async => Project(
-          name: 'DalkTest',
           production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
           development: ProjectInformations('toto_dev', 'secret'),
         ),
@@ -294,7 +285,6 @@ void main() {
       final getProjectByKey = GetProjectByKeyMock();
       when(getProjectByKey.request(any)).thenAnswer(
         (_) async => Project(
-          name: 'DalkTest',
           production: ProjectInformations('toto', 'secret', groupLimitation: 2),
           development: ProjectInformations('toto_dev', 'secret'),
         ),
@@ -327,7 +317,6 @@ void main() {
       final getProjectByKey = GetProjectByKeyMock();
       when(getProjectByKey.request(any)).thenAnswer(
         (_) async => Project(
-          name: 'DalkTest',
           production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
           development: ProjectInformations('toto_dev', 'secret'),
         ),
@@ -359,7 +348,6 @@ void main() {
       final getProjectByKey = GetProjectByKeyMock();
       when(getProjectByKey.request(any)).thenAnswer(
         (_) async => Project(
-          name: 'DalkTest',
           production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
           development: ProjectInformations('toto_dev', 'secret'),
         ),
@@ -392,7 +380,6 @@ void main() {
         final getProjectByKey = GetProjectByKeyMock();
         when(getProjectByKey.request(any)).thenAnswer(
           (_) async => Project(
-            name: 'DalkTest',
             production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
             development: ProjectInformations('toto_dev', 'secret'),
           ),
@@ -424,7 +411,6 @@ void main() {
         final getProjectByKey = GetProjectByKeyMock();
         when(getProjectByKey.request(any)).thenAnswer(
           (_) async => Project(
-            name: 'DalkTest',
             production: ProjectInformations('toto', 'secret'),
             development: ProjectInformations('toto_dev', 'secret'),
           ),
@@ -468,7 +454,6 @@ void main() {
         final getProjectByKey = GetProjectByKeyMock();
         when(getProjectByKey.request(any)).thenAnswer(
           (_) async => Project(
-            name: 'DalkTest',
             production: ProjectInformations('toto', 'secret'),
             development: ProjectInformations('toto_dev', 'secret'),
           ),
@@ -622,7 +607,6 @@ void main() {
         final getProjectByKey = GetProjectByKeyMock();
         when(getProjectByKey.request(any)).thenAnswer(
           (_) async => Project(
-            name: 'DalkTest',
             production: ProjectInformations('toto', 'secret'),
             development: ProjectInformations('toto_dev', 'secret'),
           ),
@@ -678,7 +662,6 @@ void main() {
         final getProjectByKey = GetProjectByKeyMock();
         when(getProjectByKey.request(any)).thenAnswer(
           (_) async => Project(
-            name: 'DalkTest',
             production: ProjectInformations('toto', 'secret'),
             development: ProjectInformations('toto_dev', 'secret'),
           ),
@@ -732,7 +715,6 @@ void main() {
       final getProjectByKey = GetProjectByKeyMock();
       when(getProjectByKey.request(any)).thenAnswer(
         (_) async => Project(
-          name: 'DalkTest',
           production: ProjectInformations('toto', 'secret', webhook: 'http://test.com'),
           development: ProjectInformations('toto_dev', 'secret', webhook: 'http://test.com'),
         ),
@@ -788,7 +770,6 @@ void main() {
       final getProjectByKey = GetProjectByKeyMock();
       when(getProjectByKey.request(any)).thenAnswer(
         (_) async => Project(
-          name: 'DalkTest',
           production: ProjectInformations('toto', 'secret'),
           development: ProjectInformations('toto_dev', 'secret'),
         ),
@@ -850,7 +831,6 @@ void main() {
       final getProjectByKey = GetProjectByKeyMock();
       when(getProjectByKey.request(any)).thenAnswer(
         (_) async => Project(
-          name: 'DalkTest',
           production: ProjectInformations('toto', 'secret', webhook: 'http://test.com'),
           development: ProjectInformations('toto_dev', 'secret', webhook: 'http://test.com'),
         ),
@@ -903,7 +883,6 @@ void main() {
       final getProjectByKey = GetProjectByKeyMock();
       when(getProjectByKey.request(any)).thenAnswer(
         (_) async => Project(
-          name: 'DalkTest',
           production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
           development: ProjectInformations('toto_dev', 'secret'),
         ),
@@ -925,7 +904,6 @@ void main() {
       final getProjectByKey = GetProjectByKeyMock();
       when(getProjectByKey.request(any)).thenAnswer(
         (_) async => Project(
-          name: 'DalkTest',
           production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
           development: ProjectInformations('toto_dev', 'secret'),
         ),
@@ -953,7 +931,6 @@ void main() {
       final getProjectByKey = GetProjectByKeyMock();
       when(getProjectByKey.request(any)).thenAnswer(
         (_) async => Project(
-          name: 'DalkTest',
           production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
           development: ProjectInformations('toto_dev', 'secret'),
         ),
@@ -995,7 +972,6 @@ void main() {
       final getProjectByKey = GetProjectByKeyMock();
       when(getProjectByKey.request(any)).thenAnswer(
         (_) async => Project(
-          name: 'DalkTest',
           production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
           development: ProjectInformations('toto_dev', 'secret'),
         ),

@@ -16,14 +16,22 @@ class GetProjectByKey extends Endpoint<String, Project> {
       return null;
     }
     final result = results.first;
-    final groupLimitation = result.elementAt(7) as int;
+    final groupLimitation = result.elementAt(6) as int;
+    final secure = results.elementAt(7) as bool;
     final prod = ProjectInformations(
+      result.elementAt(0) as String,
       result.elementAt(1) as String,
-      result.elementAt(2) as String,
-      webhook: result.elementAt(3) as String,
+      webhook: result.elementAt(2) as String,
       groupLimitation: groupLimitation,
+      secure: secure,
     );
-    final dev = ProjectInformations(result.elementAt(4) as String, result.elementAt(5) as String, webhook: result.elementAt(6) as String);
-    return Project(name: result.elementAt(0) as String, production: prod, development: dev);
+    final dev = ProjectInformations(
+      result.elementAt(3) as String,
+      result.elementAt(4) as String,
+      webhook: result.elementAt(5) as String,
+      groupLimitation: groupLimitation,
+      secure: secure,
+    );
+    return Project(production: prod, development: dev);
   }
 }

@@ -30,7 +30,7 @@ class ApiV1 {
       ).router;
 
   @Route.mount('/auth/')
-  Router get _authService => AuthService().router;
+  Router get _authService => AuthService(_rpcs.accountRpcs, _rpcs.projectRpcs, _rpcs.tokenRpcs).router;
 
   Router get router => _$ApiV1Router(this);
 

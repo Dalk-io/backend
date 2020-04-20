@@ -13,11 +13,11 @@ void main() async {
     settings: PgPoolSettings()..concurrency = 10,
   );
 
-  await pg.execute('DROP TABLE accounts;');
-  await pg.execute('DROP TABLE tokens;');
-  await pg.execute('DROP TABLE users;');
-  await pg.execute('DROP TABLE projects');
-  await pg.execute('DROP TABLE conversations;');
-  await pg.execute('DROP TABLE messages;');
+  final results = await pg.query('SELECT * FROM tokens');
+
+  for (final result in results) {
+    print(result);
+  }
+
   await pg.close();
 }

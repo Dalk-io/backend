@@ -1,3 +1,4 @@
+import 'package:backend/backend.dart';
 import 'package:backend/src/databases/conversation/get_conversation_by_id.dart';
 import 'package:backend/src/databases/conversation/get_number_of_message_for_conversation.dart';
 import 'package:backend/src/databases/conversations/get_conversations_for_user.dart';
@@ -18,6 +19,8 @@ class FromDatabase {
 
   final GetProjectByKeyFromDatabase getProjectByKeyFromDatabase;
 
+  final GetAccountByEmailFromDatabase getAccountByEmailFromDatabase;
+
   FromDatabase(
     this.getConversationByIdFromDatabase,
     this.getNumberOfMessageForConversationFromDatabase,
@@ -26,5 +29,6 @@ class FromDatabase {
     this.getMessageByIdFromDatabase,
     this.getMessagesForConversationFromDatabase,
     this.getProjectByKeyFromDatabase,
+    this.getAccountByEmailFromDatabase,
   );
 }

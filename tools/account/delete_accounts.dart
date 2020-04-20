@@ -13,11 +13,7 @@ void main() async {
     settings: PgPoolSettings()..concurrency = 10,
   );
 
-  await pg.execute('DROP TABLE accounts;');
-  await pg.execute('DROP TABLE tokens;');
-  await pg.execute('DROP TABLE users;');
-  await pg.execute('DROP TABLE projects');
-  await pg.execute('DROP TABLE conversations;');
-  await pg.execute('DROP TABLE messages;');
+  await pg.execute('DELETE FROM accounts;');
+
   await pg.close();
 }

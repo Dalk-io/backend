@@ -42,7 +42,6 @@ void main(List<String> arguments) async {
   })}';
 
   final project = Project(
-    name: arguments.first,
     production: ProjectInformations(
       prodKey,
       prodSecret,
@@ -61,7 +60,6 @@ void main(List<String> arguments) async {
 
   await pg.query(
     '''INSERT INTO projects (
-      name,
   productionKey, 
   productionSecret, 
   productionWebhook, 
@@ -72,7 +70,6 @@ void main(List<String> arguments) async {
   secure
 ) VALUES (@name, @productionKey, @productionSecret, @productionWebhook, @developmentKey, @developmentSecret, @developmentWebhook, @groupLimitation, @secure)''',
     substitutionValues: <String, dynamic>{
-      'name': project.name,
       'productionKey': project.production.key,
       'productionSecret': project.production.secret,
       'productionWebhook': project.production.webhook,

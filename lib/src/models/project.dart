@@ -5,8 +5,7 @@ part 'project.freezed.dart';
 @freezed
 abstract class _ProjectBase with _$_ProjectBase {
   const factory _ProjectBase({
-    @required String name,
-    @required ProjectInformations production,
+    ProjectInformations production,
     @required ProjectInformations development,
   }) = Project;
 }

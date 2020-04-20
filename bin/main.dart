@@ -25,13 +25,23 @@ void main(List<String> arguments) async {
 
   final contactRpcs = generateContactRpcs(fromDatabase, toDatabase);
   final projectRpcs = generateProjectRpcs(fromDatabase, toDatabase);
-
   final messageRpcs = generateMessageRpcs(fromDatabase, toDatabase);
   final messagesRpcs = generateMessagesRpcs(fromDatabase, toDatabase);
   final conversationRpcs = generateConversationRpcs(fromDatabase, toDatabase);
   final conversationsRpcs = generateConversationsRpcs(fromDatabase, toDatabase);
+  final accountRpcs = generateAccountRpcs(fromDatabase, toDatabase);
+  final tokenRpcs = generateTokenRpcs(fromDatabase, toDatabase);
 
-  final rpcs = generateRpcs(messageRpcs, messagesRpcs, conversationRpcs, conversationsRpcs, contactRpcs, projectRpcs);
+  final rpcs = generateRpcs(
+    messageRpcs,
+    messagesRpcs,
+    conversationRpcs,
+    conversationsRpcs,
+    contactRpcs,
+    projectRpcs,
+    accountRpcs,
+    tokenRpcs,
+  );
 
   final backend = Backend(rpcs);
   final server = await shelf_io.serve(
@@ -51,6 +61,7 @@ FromDatabase generateFromDatabase(PgPool pgPool) => FromDatabase(
       GetMessageByIdFromDatabase(pgPool),
       GetMessagesForConversationFromDatabase(pgPool),
       GetProjectByKeyFromDatabase(pgPool),
+      GetAccountByEmailFromDatabase(pgPool),
     );
 
 ToDatabase generateToDatabase(PgPool pgPool) => ToDatabase(
@@ -60,6 +71,9 @@ ToDatabase generateToDatabase(PgPool pgPool) => ToDatabase(
       UpdateConversationSubjectAndAvatarToDatabase(pgPool),
       UpdateMessageStateToDatabase(pgPool),
       SaveMessageToDatabase(pgPool),
+      SaveAccountToDatabase(pgPool),
+      SaveProjectToDatabase(pgPool),
+      SaveTokenToDatabase(pgPool),
     );
 
 MessageRpcs generateMessageRpcs(FromDatabase from, ToDatabase to) => MessageRpcs(
@@ -84,7 +98,17 @@ ConversationsRpcs generateConversationsRpcs(FromDatabase from, ToDatabase to) =>
 
 ContactRpcs generateContactRpcs(FromDatabase from, ToDatabase to) => ContactRpcs(SaveContact(to.saveContactToDatabase));
 
-ProjectRpcs generateProjectRpcs(FromDatabase from, ToDatabase to) => ProjectRpcs(GetProjectByKey(from.getProjectByKeyFromDatabase));
+ProjectRpcs generateProjectRpcs(FromDatabase from, ToDatabase to) => ProjectRpcs(
+      GetProjectByKey(from.getProjectByKeyFromDatabase),
+      SaveProject(to.saveProjectToDatabase),
+    );
+
+AccountRpcs generateAccountRpcs(FromDatabase from, ToDatabase to) => AccountRpcs(
+      SaveAccount(to.saveAccountToDatabase),
+      GetAccountByEmail(from.getAccountByEmailFromDatabase),
+    );
+
+TokenRpcs generateTokenRpcs(FromDatabase from, ToDatabase to) => TokenRpcs(SaveToken(to.saveTokenToDatabase));
 
 Rpcs generateRpcs(
   MessageRpcs messageRpcs,
@@ -93,6 +117,8 @@ Rpcs generateRpcs(
   ConversationsRpcs conversationsRpcs,
   ContactRpcs contactRpcs,
   ProjectRpcs projectRpcs,
+  AccountRpcs accountRpcs,
+  TokenRpcs tokenRpcs,
 ) =>
     Rpcs(
       messageRpcs,
@@ -101,4 +127,6 @@ Rpcs generateRpcs(
       conversationsRpcs,
       contactRpcs,
       projectRpcs,
+      accountRpcs,
+      tokenRpcs,
     );

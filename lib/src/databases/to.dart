@@ -1,3 +1,5 @@
+import 'package:backend/backend.dart';
+import 'package:backend/src/databases/account/save_account.dart';
 import 'package:backend/src/databases/contact/save_contact.dart';
 import 'package:backend/src/databases/conversation/save_conversation.dart';
 import 'package:backend/src/databases/conversation/update_conversation_last_update.dart';
@@ -16,6 +18,12 @@ class ToDatabase {
 
   final SaveMessageToDatabase saveMessageToDatabase;
 
+  final SaveAccountToDatabase saveAccountToDatabase;
+
+  final SaveProjectToDatabase saveProjectToDatabase;
+
+  final SaveTokenToDatabase saveTokenToDatabase;
+
   ToDatabase(
     this.saveContactToDatabase,
     this.saveConversationToDatabase,
@@ -23,5 +31,8 @@ class ToDatabase {
     this.updateConversationSubjectAndAvatarToDatabase,
     this.updateMessageStateToDatabase,
     this.saveMessageToDatabase,
+    this.saveAccountToDatabase,
+    this.saveProjectToDatabase,
+    this.saveTokenToDatabase,
   );
 }
