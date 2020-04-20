@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:backend/src/api_v1/auth/auth.dart';
 import 'package:backend/src/api_v1/projects/project.dart';
 import 'package:backend/src/rpc/contact/parameters.dart';
 import 'package:backend/src/rpc/rpcs.dart';
@@ -27,6 +28,9 @@ class ApiV1 {
         _rpcs.messagesRpcs,
         _rpcs.projectRpcs.getProjectByKey,
       ).router;
+
+  @Route.mount('/auth/')
+  Router get _authService => AuthService().router;
 
   Router get router => _$ApiV1Router(this);
 
