@@ -918,13 +918,8 @@ void main() {
       final peer = PeerMock();
       realtime.addPeer(peer);
       await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
-      try {
-        await realtime.updateMessageState(Parameters('updateMessageState', {'id': '1', 'state': MessageState.sent.index}), peer);
-      } on RpcException catch (e) {
-        expect(e.code, HttpStatus.preconditionFailed);
-        expect(e.message, 'Cannot change state');
-        expect(e.data, {'oldState': 2, 'newState': 0});
-      }
+      await realtime.updateMessageState(Parameters('updateMessageState', {'id': '1', 'state': MessageState.sent.index}), peer);
+      verifyNever(peer.sendRequest(any));
     });
 
     test('sent to seen', () async {
