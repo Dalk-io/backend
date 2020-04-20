@@ -17,7 +17,7 @@ class GetProjectByKey extends Endpoint<String, Project> {
     }
     final result = results.first;
     final groupLimitation = result.elementAt(6) as int;
-    final secure = results.elementAt(7) as bool;
+    final secure = result.elementAt(7) as bool;
     final prod = ProjectInformations(
       result.elementAt(0) as String,
       result.elementAt(1) as String,
