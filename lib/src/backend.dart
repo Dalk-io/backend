@@ -1,11 +1,6 @@
 import 'package:backend/src/api_v1/api.dart';
 import 'package:backend/src/middlewares/cors.dart';
-import 'package:backend/src/rpc/contact/save_contact.dart';
-import 'package:backend/src/rpc/conversation/conversation.dart';
-import 'package:backend/src/rpc/conversations/conversations.dart';
-import 'package:backend/src/rpc/message/message.dart';
-import 'package:backend/src/rpc/messages/messages.dart';
-import 'package:backend/src/rpc/project/get_project_by_key.dart';
+import 'package:backend/src/rpc/rpcs.dart';
 import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
 import 'package:shelf/shelf.dart';
@@ -15,16 +10,11 @@ part 'backend.g.dart';
 
 @immutable
 class Backend {
-  final ConversationRpcs _conversationRpcs;
-  final ConversationsRpcs _conversationsRpcs;
-  final MessageRpcs _messageRpcs;
-  final MessagesRpcs _messagesRpcs;
-  final SaveContact _saveContact;
-  final GetProjectByKey _getProjectByKey;
+  final Rpcs _rpcs;
 
   final _logger = Logger('Backend');
 
-  Backend(this._conversationRpcs, this._conversationsRpcs, this._messageRpcs, this._messagesRpcs, this._saveContact, this._getProjectByKey);
+  Backend(this._rpcs);
 
   Handler get handler => Pipeline()
       .addMiddleware(
@@ -32,7 +22,7 @@ class Backend {
       .addHandler(_$BackendRouter(this).handler);
 
   @Route.mount('/v1/')
-  Router get _api => ApiV1(_conversationRpcs, _conversationsRpcs, _messageRpcs, _messagesRpcs, _saveContact, _getProjectByKey).router;
+  Router get _api => ApiV1(_rpcs).router;
 
   @Route.get('/ping')
   Response ping(Request request) => Response.ok('pong');

@@ -1,6 +1,8 @@
 export 'src/backend.dart';
 
 //  database endpoint
+export 'src/databases/from.dart';
+export 'src/databases/to.dart';
 
 //  messages
 export 'src/databases/messages/get_messages_for_conversation.dart';
@@ -39,6 +41,11 @@ export 'src/rpc/conversation/conversation.dart';
 //  project
 export 'src/databases/project/get_project_by_key.dart';
 export 'src/rpc/project/get_project_by_key.dart';
+export 'src/rpc/project/project.dart';
 
 //  contact
 export 'src/databases/contact/save_contact.dart';
+export 'src/rpc/contact/save_contact.dart';
+export 'src/rpc/contact/contact.dart';
+
+export 'src/rpc/rpcs.dart';

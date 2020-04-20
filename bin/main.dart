@@ -1,5 +1,4 @@
 import 'package:backend/backend.dart';
-import 'package:backend/src/rpc/contact/save_contact.dart';
 import 'package:logging/logging.dart';
 import 'package:postgres_pool/postgres_pool.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
@@ -21,54 +20,20 @@ void main(List<String> arguments) async {
     settings: PgPoolSettings()..concurrency = 100,
   );
 
-  final saveContactToDatabase = SaveContactToDatabase(postgresPool);
+  final fromDatabase = generateFromDatabase(postgresPool);
+  final toDatabase = generateToDatabase(postgresPool);
 
-  final getConversationByIdFromDatabase = GetConversationByIdFromDatabase(postgresPool);
-  final saveConversationToDatabase = SaveConversationToDatabase(postgresPool);
-  final updateConversationLastUpdateToDatabase = UpdateConversationLastUpdateToDatabase(postgresPool);
-  final updateConversationSubjectAndAvatarToDatabase = UpdateConversationSubjectAndAvatarToDatabase(postgresPool);
-  final getNumberOfMessageForConversationFromDatabase = GetNumberOfMessageForConversationFromDatabase(postgresPool);
+  final contactRpcs = generateContactRpcs(fromDatabase, toDatabase);
+  final projectRpcs = generateProjectRpcs(fromDatabase, toDatabase);
 
-  final getConversationsForUserFromDatabase = GetConversationsForUserFromDatabase(postgresPool);
+  final messageRpcs = generateMessageRpcs(fromDatabase, toDatabase);
+  final messagesRpcs = generateMessagesRpcs(fromDatabase, toDatabase);
+  final conversationRpcs = generateConversationRpcs(fromDatabase, toDatabase);
+  final conversationsRpcs = generateConversationsRpcs(fromDatabase, toDatabase);
 
-  final getLastMessageForConversationFromDatabase = GetLastMessageForConversationFromDatabase(postgresPool);
-  final getMessageByIdFromDatabase = GetMessageByIdFromDatabase(postgresPool);
-  final saveMessageToDatabase = SaveMessageToDatabase(postgresPool);
-  final updateMessageStateToDatabase = UpdateMessageStateToDatabase(postgresPool);
+  final rpcs = generateRpcs(messageRpcs, messagesRpcs, conversationRpcs, conversationsRpcs, contactRpcs, projectRpcs);
 
-  final getMessagesForConversationFromDatabase = GetMessagesForConversationFromDatabase(postgresPool);
-
-  final getProjectByKeyFromDatabase = GetProjectByKeyFromDatabase(postgresPool);
-
-  final saveContact = SaveContact(saveContactToDatabase);
-
-  final getMessagesForConversation = GetMessagesForConversation(getMessagesForConversationFromDatabase);
-  final messagesRpcs = MessagesRpcs(getMessagesForConversation);
-
-  final getMessageById = GetMessageById(getMessageByIdFromDatabase);
-  final saveMessage = SaveMessage(saveMessageToDatabase);
-  final updateMessageState = UpdateMessageState(updateMessageStateToDatabase);
-  final messageRpcs = MessageRpcs(getMessageById, saveMessage, updateMessageState);
-
-  final getUserConversations = GetConversationsForUser(getConversationsForUserFromDatabase, getLastMessageForConversationFromDatabase);
-  final conversationsRpcs = ConversationsRpcs(getUserConversations);
-
-  final getConversationById = GetConversationById(getConversationByIdFromDatabase, getMessagesForConversation);
-  final saveConversation = SaveConversation(saveConversationToDatabase);
-  final updateConversationLastUpdate = UpdateConversationLastUpdate(updateConversationLastUpdateToDatabase);
-  final updateConversationSubjectAndAvatar = UpdateConversationSubjectAndAvatar(updateConversationSubjectAndAvatarToDatabase);
-  final getNumberOfMessageForConversation = GetNumberOfMessageForConversation(getNumberOfMessageForConversationFromDatabase);
-  final conversationRpcs = ConversationRpcs(
-    getConversationById,
-    saveConversation,
-    updateConversationLastUpdate,
-    updateConversationSubjectAndAvatar,
-    getNumberOfMessageForConversation,
-  );
-
-  final getProjectByKey = GetProjectByKey(getProjectByKeyFromDatabase);
-
-  final backend = Backend(conversationRpcs, conversationsRpcs, messageRpcs, messagesRpcs, saveContact, getProjectByKey);
+  final backend = Backend(rpcs);
   final server = await shelf_io.serve(
     backend.handler,
     '0.0.0.0',
@@ -77,3 +42,63 @@ void main(List<String> arguments) async {
 
   _logger.info('listening http://${server.address.address}:${server.port}');
 }
+
+FromDatabase generateFromDatabase(PgPool pgPool) => FromDatabase(
+      GetConversationByIdFromDatabase(pgPool),
+      GetNumberOfMessageForConversationFromDatabase(pgPool),
+      GetConversationsForUserFromDatabase(pgPool),
+      GetLastMessageForConversationFromDatabase(pgPool),
+      GetMessageByIdFromDatabase(pgPool),
+      GetMessagesForConversationFromDatabase(pgPool),
+      GetProjectByKeyFromDatabase(pgPool),
+    );
+
+ToDatabase generateToDatabase(PgPool pgPool) => ToDatabase(
+      SaveContactToDatabase(pgPool),
+      SaveConversationToDatabase(pgPool),
+      UpdateConversationLastUpdateToDatabase(pgPool),
+      UpdateConversationSubjectAndAvatarToDatabase(pgPool),
+      UpdateMessageStateToDatabase(pgPool),
+      SaveMessageToDatabase(pgPool),
+    );
+
+MessageRpcs generateMessageRpcs(FromDatabase from, ToDatabase to) => MessageRpcs(
+      GetMessageById(from.getMessageByIdFromDatabase),
+      SaveMessage(to.saveMessageToDatabase),
+      UpdateMessageState(to.updateMessageStateToDatabase),
+    );
+
+MessagesRpcs generateMessagesRpcs(FromDatabase from, ToDatabase to) => MessagesRpcs(GetMessagesForConversation(from.getMessagesForConversationFromDatabase));
+
+ConversationRpcs generateConversationRpcs(FromDatabase from, ToDatabase to) => ConversationRpcs(
+      GetConversationById(from.getConversationByIdFromDatabase, GetMessagesForConversation(from.getMessagesForConversationFromDatabase)),
+      SaveConversation(to.saveConversationToDatabase),
+      UpdateConversationLastUpdate(to.updateConversationLastUpdateToDatabase),
+      UpdateConversationSubjectAndAvatar(to.updateConversationSubjectAndAvatarToDatabase),
+      GetNumberOfMessageForConversation(from.getNumberOfMessageForConversationFromDatabase),
+    );
+
+ConversationsRpcs generateConversationsRpcs(FromDatabase from, ToDatabase to) => ConversationsRpcs(
+      GetConversationsForUser(from.getConversationsForUserFromDatabase, from.getLastMessageForConversationFromDatabase),
+    );
+
+ContactRpcs generateContactRpcs(FromDatabase from, ToDatabase to) => ContactRpcs(SaveContact(to.saveContactToDatabase));
+
+ProjectRpcs generateProjectRpcs(FromDatabase from, ToDatabase to) => ProjectRpcs(GetProjectByKey(from.getProjectByKeyFromDatabase));
+
+Rpcs generateRpcs(
+  MessageRpcs messageRpcs,
+  MessagesRpcs messagesRpcs,
+  ConversationRpcs conversationRpcs,
+  ConversationsRpcs conversationsRpcs,
+  ContactRpcs contactRpcs,
+  ProjectRpcs projectRpcs,
+) =>
+    Rpcs(
+      messageRpcs,
+      messagesRpcs,
+      conversationRpcs,
+      conversationsRpcs,
+      contactRpcs,
+      projectRpcs,
+    );
