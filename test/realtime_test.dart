@@ -2,9 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:backend/src/api_v1/projects/realtime.dart';
-import 'package:backend/src/models/conversation.dart';
-import 'package:backend/src/models/message.dart';
-import 'package:backend/src/models/project.dart';
+import 'package:backend/src/data/message/message.dart';
 import 'package:crypto/crypto.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:json_rpc_2/error_code.dart';
@@ -12,111 +10,65 @@ import 'package:json_rpc_2/json_rpc_2.dart';
 import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
 
-import 'mocks/io_client.dart';
-import 'mocks/peer.dart';
-import 'mocks/rpc/conversation/get_conversation_by_id.dart';
-import 'mocks/rpc/conversation/get_number_of_message_for_conversation.dart';
-import 'mocks/rpc/conversation/save_conversation.dart';
-import 'mocks/rpc/conversation/update_conversation_last_update.dart';
-import 'mocks/rpc/conversation/update_conversation_subject_and_avatar.dart';
-import 'mocks/rpc/conversations/get_conversations_for_user.dart';
-import 'mocks/rpc/message/get_message_by_id.dart';
-import 'mocks/rpc/message/save_message.dart';
-import 'mocks/rpc/message/update_message_state.dart';
-import 'mocks/rpc/messages/get_messages_for_conversation.dart';
-import 'mocks/rpc/project/get_project_by_key.dart';
+import 'src/mocks/peer.dart';
+import 'src/realtime.dart';
 
 void main() {
+  Realtime realtime;
+
+  setUp(() {
+    realtime = initRealtime('testProjectKey');
+  });
+
   test('add Peer', () async {
-    final realtime = Realtime(ProjectInformations('toto', null), null, null, null, null, null, null, null, null, null, null, null);
+    final realtime = initRealtime('testProjectKey');
     realtime.addPeer(PeerMock());
     expect(realtime.connectedPeers.length, 1);
   });
 
-  test('delete Peer', () async {
-    final realtime = Realtime(ProjectInformations('toto', null), null, null, null, null, null, null, null, null, null, null, null);
+  test('remove Peer', () async {
     final peer = PeerMock();
     realtime.addPeer(peer);
-    realtime.removePeer(peer);
+    await realtime.registerUser(Parameters('registerUser', <String, String>{'id': '1'}), peer);
+    await realtime.removePeer(peer);
+    expect(realtime.connectedUsers.length, 0);
     expect(realtime.connectedPeers.length, 0);
   });
 
   group('register user', () {
-    test('unsecure', () async {
-      final getProjectByKey = GetProjectByKeyMock();
-      when(getProjectByKey.request(any)).thenAnswer(
-        (_) async => Project(
-          production: ProjectInformations('toto', 'secret', groupLimitation: 2),
-          development: ProjectInformations('toto_dev', 'secret'),
-        ),
-      );
-      final realtime = Realtime(ProjectInformations('toto', null), null, null, null, null, null, null, null, null, null, null, getProjectByKey);
+    test('isSecure false', () async {
       final peer = PeerMock();
       realtime.addPeer(peer);
-      await realtime.registerUser(Parameters('registerUser', {'id': '1234'}), peer);
+      await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
       expect(realtime.connectedUsers.length, 1);
     });
 
     test('secure', () async {
-      final getProjectByKey = GetProjectByKeyMock();
-      when(getProjectByKey.request(any)).thenAnswer(
-        (_) async => Project(
-          production: ProjectInformations('toto', 'mysecret', groupLimitation: 2, secure: true),
-          development: ProjectInformations('toto_dev', 'secret'),
-        ),
-      );
-
-      final projectInformations = ProjectInformations('toto', 'mysecret', secure: true);
-      final realtime = Realtime(projectInformations, null, null, null, null, null, null, null, null, null, null, getProjectByKey);
       final peer = PeerMock();
       realtime.addPeer(peer);
-      final signature = sha512.convert(utf8.encode('1234${projectInformations.secret}')).toString();
-      await realtime.registerUser(Parameters('registerUser', {'id': '1234', 'signature': signature}), peer);
+      final signature = sha512.convert(utf8.encode('1234secret')).toString();
+      await realtime.registerUser(Parameters('registerUser', {'id': '1', 'signature': signature}), peer);
       expect(realtime.connectedUsers.length, 1);
     });
   });
 
   group('get conversations', () {
     test('for users with no conversations', () async {
-      final getProjectByKey = GetProjectByKeyMock();
-      when(getProjectByKey.request(any)).thenAnswer(
-        (_) async => Project(
-          production: ProjectInformations('toto', 'secret', groupLimitation: 2),
-          development: ProjectInformations('toto_dev', 'secret'),
-        ),
-      );
-      final getUserConversationsMock = GetConversationsForUserMock();
-      when(getUserConversationsMock.request(any)).thenAnswer((_) async => <Conversation>[]);
-      final realtime =
-          Realtime(ProjectInformations('toto', null), null, null, null, null, null, getUserConversationsMock, null, null, null, null, getProjectByKey);
       final peer = PeerMock();
       realtime.addPeer(peer);
-      await realtime.registerUser(Parameters('registerUser', {'id': '1234'}), peer);
+      await realtime.registerUser(Parameters('registerUser', {'id': '10'}), peer);
       final conversations = await realtime.getConversations(peer);
       expect(conversations, isEmpty);
     });
 
     test('for users with conversations', () async {
-      final getProjectByKey = GetProjectByKeyMock();
-      when(getProjectByKey.request(any)).thenAnswer(
-        (_) async => Project(
-          production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
-          development: ProjectInformations('toto_dev', 'secret'),
-        ),
-      );
-      final getUserConversationsMock = GetConversationsForUserMock();
-      when(getUserConversationsMock.request(any)).thenAnswer((_) async => <Conversation>[
-            Conversation('123', null, null, {'1'}, {'1', '2'}, false)
-          ]);
-      final realtime =
-          Realtime(ProjectInformations('toto', null), null, null, null, null, null, getUserConversationsMock, null, null, null, null, getProjectByKey);
       final peer = PeerMock();
       realtime.addPeer(peer);
       await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
       final conversations = await realtime.getConversations(peer);
       expect(conversations, isNotEmpty);
       expect(conversations.length, 1);
-      expect(conversations.first['id'], '123');
+      expect(conversations.first['id'], '1');
       expect(conversations.first['subject'], isNull);
       expect(conversations.first['avatar'], isNull);
       expect(conversations.first['admins'].length, 1);
@@ -127,18 +79,6 @@ void main() {
 
   group('set conversation options', () {
     test('with existing conversation', () async {
-      final getProjectByKey = GetProjectByKeyMock();
-      when(getProjectByKey.request(any)).thenAnswer(
-        (_) async => Project(
-          production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
-          development: ProjectInformations('toto_dev', 'secret'),
-        ),
-      );
-      final getConversationById = GetConversationByIdMock();
-      final updateConversationSubjectAndAvatar = UpdateConversationSubjectAndAvatarParametersMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('1', null, null, {'1'}, {'1', '2'}, false));
-      final realtime = Realtime(ProjectInformations('toto', null), updateConversationSubjectAndAvatar, getConversationById, null, null, null, null, null, null,
-          null, null, getProjectByKey);
       final peer = PeerMock();
       realtime.addPeer(peer);
       await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
@@ -156,18 +96,6 @@ void main() {
     });
 
     test('with non existing conversation', () async {
-      final getProjectByKey = GetProjectByKeyMock();
-      when(getProjectByKey.request(any)).thenAnswer(
-        (_) async => Project(
-          production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
-          development: ProjectInformations('toto_dev', 'secret'),
-        ),
-      );
-      final getConversationById = GetConversationByIdMock();
-      final updateConversationSubjectAndAvatar = UpdateConversationSubjectAndAvatarParametersMock();
-      when(getConversationById.request(any)).thenThrow(RpcException(HttpStatus.notFound, 'Conversation not found', data: <String, dynamic>{'id': '1'}));
-      final realtime = Realtime(ProjectInformations('toto', null), updateConversationSubjectAndAvatar, getConversationById, null, null, null, null, null, null,
-          null, null, getProjectByKey);
       final peer = PeerMock();
       realtime.addPeer(peer);
       await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
@@ -191,18 +119,6 @@ void main() {
     });
 
     test('without conversationId in parameters', () async {
-      final getProjectByKey = GetProjectByKeyMock();
-      when(getProjectByKey.request(any)).thenAnswer(
-        (_) async => Project(
-          production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
-          development: ProjectInformations('toto_dev', 'secret'),
-        ),
-      );
-      final getConversationById = GetConversationByIdMock();
-      final updateConversationSubjectAndAvatar = UpdateConversationSubjectAndAvatarParametersMock();
-      when(getConversationById.request(any)).thenThrow(RpcException(HttpStatus.notFound, 'Conversation not found', data: <String, dynamic>{'id': '1'}));
-      final realtime = Realtime(ProjectInformations('toto', null), updateConversationSubjectAndAvatar, getConversationById, null, null, null, null, null, null,
-          null, null, getProjectByKey);
       final peer = PeerMock();
       realtime.addPeer(peer);
       await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
@@ -224,14 +140,6 @@ void main() {
 
   group('get or create conversation', () {
     test('without conversationId in parameters', () async {
-      final getProjectByKey = GetProjectByKeyMock();
-      when(getProjectByKey.request(any)).thenAnswer(
-        (_) async => Project(
-          production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
-          development: ProjectInformations('toto_dev', 'secret'),
-        ),
-      );
-      final realtime = Realtime(ProjectInformations('toto', null), null, null, null, null, null, null, null, null, null, null, getProjectByKey);
       final peer = PeerMock();
       realtime.addPeer(peer);
       await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
@@ -249,16 +157,6 @@ void main() {
     });
 
     test('get conversation', () async {
-      final getProjectByKey = GetProjectByKeyMock();
-      when(getProjectByKey.request(any)).thenAnswer(
-        (_) async => Project(
-          production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
-          development: ProjectInformations('toto_dev', 'secret'),
-        ),
-      );
-      final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('1', null, null, {'1'}, {'1', '2'}, false));
-      final realtime = Realtime(ProjectInformations('toto', null), null, getConversationById, null, null, null, null, null, null, null, null, getProjectByKey);
       final peer = PeerMock();
       realtime.addPeer(peer);
       await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
@@ -280,18 +178,6 @@ void main() {
     });
 
     test('group limit', () async {
-      final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => null);
-      final getProjectByKey = GetProjectByKeyMock();
-      when(getProjectByKey.request(any)).thenAnswer(
-        (_) async => Project(
-          production: ProjectInformations('toto', 'secret', groupLimitation: 2),
-          development: ProjectInformations('toto_dev', 'secret'),
-        ),
-      );
-      final saveConversation = SaveConversationMock();
-      final realtime =
-          Realtime(ProjectInformations('toto', null), null, getConversationById, saveConversation, null, null, null, null, null, null, null, getProjectByKey);
       final peer = PeerMock();
       realtime.addPeer(peer);
       await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
@@ -300,30 +186,32 @@ void main() {
           Parameters(
             'getOrCreateConversation',
             <String, dynamic>{
-              'id': '1',
-              'users': ['1', '2', '3', '4', '5', '6'],
+              'id': '404',
+              'users': [
+                {'id': '1'},
+                {'id': '2'},
+                {'id': '3'},
+                {'id': '4'},
+                {'id': '5'},
+                {'id': '6'},
+                {'id': '7'},
+                {'id': '8'},
+                {'id': '9'},
+                {'id': '10'},
+              ],
             },
           ),
           peer,
         );
+        expect(true, isFalse);
       } on RpcException catch (e) {
         expect(e.code, HttpStatus.unauthorized);
         expect(e.message, 'Group conversation limit');
-        expect(e.data, {'groupLimitation': 2, 'groupSize': 5});
+        expect(e.data, {'groupLimitation': 5, 'groupSize': 9});
       }
     });
 
     test('get conversation with subject', () async {
-      final getProjectByKey = GetProjectByKeyMock();
-      when(getProjectByKey.request(any)).thenAnswer(
-        (_) async => Project(
-          production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
-          development: ProjectInformations('toto_dev', 'secret'),
-        ),
-      );
-      final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('1', 'Test subject', null, {'1'}, {'1', '2'}, false));
-      final realtime = Realtime(ProjectInformations('toto', null), null, getConversationById, null, null, null, null, null, null, null, null, getProjectByKey);
       final peer = PeerMock();
       realtime.addPeer(peer);
       await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
@@ -331,7 +219,7 @@ void main() {
         Parameters(
           'getOrCreateConversation',
           <String, dynamic>{
-            'id': '1',
+            'id': '2',
           },
         ),
         peer,
@@ -345,16 +233,6 @@ void main() {
     });
 
     test('get conversation with avatar', () async {
-      final getProjectByKey = GetProjectByKeyMock();
-      when(getProjectByKey.request(any)).thenAnswer(
-        (_) async => Project(
-          production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
-          development: ProjectInformations('toto_dev', 'secret'),
-        ),
-      );
-      final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('1', null, 'https://avatarturl.com', {'1'}, {'1', '2'}, false));
-      final realtime = Realtime(ProjectInformations('toto', null), null, getConversationById, null, null, null, null, null, null, null, null, getProjectByKey);
       final peer = PeerMock();
       realtime.addPeer(peer);
       await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
@@ -362,7 +240,7 @@ void main() {
         Parameters(
           'getOrCreateConversation',
           <String, dynamic>{
-            'id': '1',
+            'id': '3',
           },
         ),
         peer,
@@ -377,17 +255,6 @@ void main() {
 
     group('create conversation', () {
       test('without to parameters', () async {
-        final getProjectByKey = GetProjectByKeyMock();
-        when(getProjectByKey.request(any)).thenAnswer(
-          (_) async => Project(
-            production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
-            development: ProjectInformations('toto_dev', 'secret'),
-          ),
-        );
-        final getConversationById = GetConversationByIdMock();
-        when(getConversationById.request(any)).thenAnswer((_) async => null);
-        final realtime =
-            Realtime(ProjectInformations('toto', null), null, getConversationById, null, null, null, null, null, null, null, null, getProjectByKey);
         final peer = PeerMock();
         realtime.addPeer(peer);
         await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
@@ -405,18 +272,6 @@ void main() {
       });
 
       test('one to one', () async {
-        final getConversationById = GetConversationByIdMock();
-        final saveConversation = SaveConversationMock();
-        when(getConversationById.request(any)).thenAnswer((_) async => null);
-        final getProjectByKey = GetProjectByKeyMock();
-        when(getProjectByKey.request(any)).thenAnswer(
-          (_) async => Project(
-            production: ProjectInformations('toto', 'secret'),
-            development: ProjectInformations('toto_dev', 'secret'),
-          ),
-        );
-        final realtime =
-            Realtime(ProjectInformations('toto', null), null, getConversationById, saveConversation, null, null, null, null, null, null, null, getProjectByKey);
         final peer = PeerMock();
         final other = PeerMock();
         realtime.addPeer(peer);
@@ -427,18 +282,26 @@ void main() {
           Parameters(
             'getOrCreateConversation',
             <String, dynamic>{
-              'id': '1',
-              'users': ['1', '2'],
+              'id': '100',
+              'users': [
+                {'id': '1'},
+                {'id': '2'}
+              ],
             },
           ),
           peer,
         );
         expect(conversation, isMap);
         expect(conversation.containsKey('id'), isTrue);
-        expect(conversation['id'], '1');
+        expect(conversation['id'], '100');
         expect(conversation.containsKey('users'), isTrue);
-        expect(DeepCollectionEquality().equals(conversation['users'], ['1', '2']), isTrue);
-        final otherUser = realtime.connectedUsers.firstWhere((user) => user.id == '2');
+        expect(
+            DeepCollectionEquality().equals(conversation['users'], [
+              {'id': '1'},
+              {'id': '2'}
+            ]),
+            isTrue);
+        final otherUser = realtime.connectedUsers.firstWhere((user) => user.data.id == '2');
         final onConversationCreatedCalled = verifyNever(otherUser.onConversationCreated(<String, dynamic>{
           'id': '1',
           'admins': ['1'],
@@ -448,18 +311,6 @@ void main() {
       });
 
       test('group', () async {
-        final getConversationById = GetConversationByIdMock();
-        final sveConversation = SaveConversationMock();
-        when(getConversationById.request(any)).thenAnswer((_) async => null);
-        final getProjectByKey = GetProjectByKeyMock();
-        when(getProjectByKey.request(any)).thenAnswer(
-          (_) async => Project(
-            production: ProjectInformations('toto', 'secret'),
-            development: ProjectInformations('toto_dev', 'secret'),
-          ),
-        );
-        final realtime =
-            Realtime(ProjectInformations('toto', null), null, getConversationById, sveConversation, null, null, null, null, null, null, null, getProjectByKey);
         final peer = PeerMock();
         final other = PeerMock();
         when(other.sendRequest('onConversationCreated', any)).thenAnswer((_) => null);
@@ -471,17 +322,27 @@ void main() {
           Parameters(
             'getOrCreateConversation',
             <String, dynamic>{
-              'id': '1',
-              'users': ['1', '2', '3'],
+              'id': '5',
+              'users': [
+                {'id': '1'},
+                {'id': '2'},
+                {'id': '3'}
+              ],
             },
           ),
           peer,
         );
         expect(conversation, isMap);
         expect(conversation.containsKey('id'), isTrue);
-        expect(conversation['id'], '1');
+        expect(conversation['id'], '5');
         expect(conversation.containsKey('users'), isTrue);
-        expect(DeepCollectionEquality().equals(conversation['users'], ['1', '2', '3']), isTrue);
+        expect(
+            DeepCollectionEquality().equals(conversation['users'], [
+              {'id': '1'},
+              {'id': '2'},
+              {'id': '3'}
+            ]),
+            isTrue);
         verify(other.sendRequest('onConversationCreated', any)).called(1);
       });
     });
@@ -489,30 +350,22 @@ void main() {
 
   group('get messages', () {
     test('bad conversation id', () async {
-      final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => null);
-      final getMessagesForConversation = GetMessagesForConversationMock();
-      when(getMessagesForConversation.request(any)).thenAnswer((_) async => [
-            Message('toto', '1', '12', '1', 'Hello world', DateTime.now(),
-                [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.sent)]),
-            Message('toto', '2', '12', '1', 'How are you', DateTime.now(),
-                [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.sent)]),
-          ]);
-      final realtime =
-          Realtime(ProjectInformations('toto', null), null, getConversationById, null, null, null, null, null, null, null, getMessagesForConversation, null);
       try {
-        await realtime.getMessages(Parameters('getMessages', {'from': 0, 'to': -1, 'conversationId': '12'}));
+        final peer = PeerMock();
+        await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+        await realtime.getMessages(Parameters('getMessages', {'from': 0, 'to': -1, 'conversationId': '1000'}), peer);
       } on RpcException catch (e) {
         expect(e.code, HttpStatus.notFound);
         expect(e.message, 'Conversation not found');
-        expect(e.data, {'id': '12'});
+        expect(e.data, {'id': '1000'});
       }
     });
 
     test('bad value of from and to', () async {
-      final realtime = Realtime(ProjectInformations('toto', null), null, null, null, null, null, null, null, null, null, null, null);
+      final peer = PeerMock();
+      await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
       try {
-        await realtime.getMessages(Parameters('getMessages', {'from': 10, 'to': 1, 'conversationId': '12'}));
+        await realtime.getMessages(Parameters('getMessages', {'from': 10, 'to': 1, 'conversationId': '12'}), peer);
       } on RpcException catch (e) {
         expect(e.code, INVALID_PARAMS);
         expect(e.message, 'from can\'t be inferior at to');
@@ -520,46 +373,27 @@ void main() {
     });
 
     test('get all message', () async {
-      final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}, false));
-      final getMessagesForConversation = GetMessagesForConversationMock();
-      when(getMessagesForConversation.request(any)).thenAnswer((_) async => [
-            Message('toto', '2', '12', '1', 'How are you', DateTime.now(),
-                [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.sent)]),
-            Message('toto', '1', '12', '1', 'Hello world', DateTime.now(),
-                [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.sent)]),
-          ]);
-      final realtime =
-          Realtime(ProjectInformations('toto', null), null, getConversationById, null, null, null, null, null, null, null, getMessagesForConversation, null);
-      final response = await realtime.getMessages(Parameters('getMessages', {'from': 0, 'to': -1, 'conversationId': '12'}));
+      final peer = PeerMock();
+      await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+      final response = await realtime.getMessages(Parameters('getMessages', {'from': 0, 'to': -1, 'conversationId': '6'}), peer);
       expect(response.length == 2, isTrue);
     });
 
     test('get last message', () async {
-      final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}, false));
-      final getMessagesForConversation = GetMessagesForConversationMock();
-      when(getMessagesForConversation.request(any)).thenAnswer((_) async => [
-            Message('toto', '2', '12', '1', 'How are you', DateTime.now(),
-                [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.sent)]),
-            Message('toto', '1', '12', '1', 'Hello world', DateTime.now(),
-                [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.sent)]),
-          ]);
-      final realtime =
-          Realtime(ProjectInformations('toto', null), null, getConversationById, null, null, null, null, null, null, null, getMessagesForConversation, null);
-      final response = await realtime.getMessages(Parameters('getMessages', {'from': 0, 'to': 1, 'conversationId': '12'}));
+      final peer = PeerMock();
+      await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+      final response = await realtime.getMessages(Parameters('getMessages', {'from': 0, 'to': 1, 'conversationId': '6'}), peer);
       expect(response.length == 1, isTrue);
-      expect(response.first['text'], 'How are you');
+      expect(response.first['text'], 'How are you?');
     });
   });
 
   group('get conversation details', () {
     test('bad conversation id', () async {
-      final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => null);
-      final realtime = Realtime(ProjectInformations('toto', null), null, getConversationById, null, null, null, null, null, null, null, null, null);
+      final peer = PeerMock();
+      await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
       try {
-        await realtime.getConversationDetail(Parameters('getConversationDetails', {'id': '12'}));
+        await realtime.getConversationDetail(Parameters('getConversationDetails', {'id': '12'}), peer);
       } on RpcException catch (e) {
         expect(e.code, HttpStatus.notFound);
         expect(e.message, 'Conversation not found');
@@ -568,13 +402,9 @@ void main() {
     });
 
     test('valid conversation', () async {
-      final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}, false)
-        ..messages.addAll([
-          Message('toto', '1', '12', '1', 'Hello world!', DateTime.now(), [MessageStateByUser('2', MessageState.sent)]),
-        ]));
-      final realtime = Realtime(ProjectInformations('toto', null), null, getConversationById, null, null, null, null, null, null, null, null, null);
-      final response = await realtime.getConversationDetail(Parameters('getConversationDetails', {'id': '12'}));
+      final peer = PeerMock();
+      await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+      final response = await realtime.getConversationDetail(Parameters('getConversationDetails', {'id': '12'}), peer);
       expect(response['id'], '12');
       expect(response['messages'].length, 1);
     });
@@ -582,110 +412,49 @@ void main() {
 
   group('send message', () {
     test('conversation not found', () async {
-      final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => null);
-      final realtime = Realtime(ProjectInformations('toto', null), null, getConversationById, null, null, null, null, null, null, null, null, null);
       final peer = PeerMock();
       realtime.addPeer(peer);
       try {
-        await realtime.sendMessage(Parameters('sendMessage', {'conversationId': '12'}), peer);
+        await realtime.sendMessage(Parameters('sendMessage', {'conversationId': '404'}), peer);
       } on RpcException catch (e) {
         expect(e.code, HttpStatus.notFound);
         expect(e.message, 'Conversation not found');
-        expect(e.data, {'id': '12'});
+        expect(e.data, {'id': '404'});
       }
     });
 
     group('first message in 1:1 conversation', () {
       test('when other is connected', () async {
-        final getConversationById = GetConversationByIdMock();
-        when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}, false));
-        final saveMessage = SaveMessageMock();
-        when(saveMessage.request(any)).thenAnswer((_) async => 1);
-        final getNumberOfMessageForConversation = GetNumberOfMessageForConversationMock();
-        when(getNumberOfMessageForConversation.request(any)).thenAnswer((_) async => 0);
-        final getProjectByKey = GetProjectByKeyMock();
-        when(getProjectByKey.request(any)).thenAnswer(
-          (_) async => Project(
-            production: ProjectInformations('toto', 'secret'),
-            development: ProjectInformations('toto_dev', 'secret'),
-          ),
-        );
-        final updateConversationLastUpdate = UpdateConversationLastUpdateMock();
         final peer = PeerMock();
         final other = PeerMock();
-        final realtime = Realtime(
-          ProjectInformations('toto', null),
-          null,
-          getConversationById,
-          null,
-          updateConversationLastUpdate,
-          getNumberOfMessageForConversation,
-          null,
-          saveMessage,
-          null,
-          null,
-          null,
-          getProjectByKey,
-          dateTimeFactory: () => DateTime.utc(2020, 01, 01, 14, 30),
-        );
         realtime..addPeer(peer)..addPeer(other);
         await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
         await realtime.registerUser(Parameters('registerUser', {'id': '2'}), other);
-        final response = await realtime.sendMessage(Parameters('sendMessage', {'conversationId': '12', 'text': 'Hello world'}), peer);
+        final response = await realtime.sendMessage(Parameters('sendMessage', {'conversationId': '13', 'text': 'Hello world'}), peer);
         expect(response.isNotEmpty, isTrue);
-        verify(other.sendRequest('onConversationCreated', any)).called(1);
-        verifyNever(other.sendRequest('receiveMessage12', any));
         expect(
           DeepCollectionEquality().equals(response, {
             'id': '1',
             'senderId': '1',
             'text': 'Hello world',
             'timestamp': '2020-01-01T14:30:00.000Z',
-            'state': 0,
-            'stateDetails': [
-              {'userId': '2', 'state': 0},
-            ]
+            'states': [
+              {'id': '2', 'state': 'sent'},
+            ],
+            'state': 'sent',
           }),
           isTrue,
         );
+        verify(other.sendRequest('onConversationCreated', any)).called(1);
+        verifyNever(other.sendRequest('receiveMessage13', any));
       });
 
       test('when other is not connected', () async {
-        final getConversationById = GetConversationByIdMock();
-        when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}, false));
-        final saveMessage = SaveMessageMock();
-        when(saveMessage.request(any)).thenAnswer((_) async => 1);
-        final updateConversationLastUpdate = UpdateConversationLastUpdateMock();
-        final getNumberOfMessageForConversation = GetNumberOfMessageForConversationMock();
-        when(getNumberOfMessageForConversation.request(any)).thenAnswer((_) async => 0);
-        final getProjectByKey = GetProjectByKeyMock();
-        when(getProjectByKey.request(any)).thenAnswer(
-          (_) async => Project(
-            production: ProjectInformations('toto', 'secret'),
-            development: ProjectInformations('toto_dev', 'secret'),
-          ),
-        );
         final peer = PeerMock();
         final other = PeerMock();
-        final realtime = Realtime(
-          ProjectInformations('toto', null),
-          null,
-          getConversationById,
-          null,
-          updateConversationLastUpdate,
-          getNumberOfMessageForConversation,
-          null,
-          saveMessage,
-          null,
-          null,
-          null,
-          getProjectByKey,
-          dateTimeFactory: () => DateTime.utc(2020, 01, 01, 14, 30),
-        );
         realtime..addPeer(peer);
         await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
-        final response = await realtime.sendMessage(Parameters('sendMessage', {'conversationId': '12', 'text': 'Hello world'}), peer);
+        final response = await realtime.sendMessage(Parameters('sendMessage', {'conversationId': '13', 'text': 'Hello world'}), peer);
         expect(response.isNotEmpty, isTrue);
         verifyNever(other.sendRequest('onConversationCreated', any));
         verifyNever(other.sendRequest('receiveMessage12', any));
@@ -695,9 +464,9 @@ void main() {
             'senderId': '1',
             'text': 'Hello world',
             'timestamp': '2020-01-01T14:30:00.000Z',
-            'state': 0,
-            'stateDetails': [
-              {'userId': '2', 'state': 0},
+            'state': 'sent',
+            'states': [
+              {'id': '2', 'state': 'sent'},
             ]
           }),
           isTrue,
@@ -706,53 +475,24 @@ void main() {
     });
 
     test('1:1 multiple message in conversation', () async {
-      final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}, false));
-      final saveMessage = SaveMessageMock();
-      when(saveMessage.request(any)).thenAnswer((_) async => 1);
-      final getNumberOfMessageForConversation = GetNumberOfMessageForConversationMock();
-      when(getNumberOfMessageForConversation.request(any)).thenAnswer((_) async => 13);
-      final getProjectByKey = GetProjectByKeyMock();
-      when(getProjectByKey.request(any)).thenAnswer(
-        (_) async => Project(
-          production: ProjectInformations('toto', 'secret', webhook: 'http://test.com'),
-          development: ProjectInformations('toto_dev', 'secret', webhook: 'http://test.com'),
-        ),
-      );
-      final updateConversationLastUpdate = UpdateConversationLastUpdateMock();
       final peer = PeerMock();
       final other = PeerMock();
-      final realtime = Realtime(
-        ProjectInformations('toto', null),
-        null,
-        getConversationById,
-        null,
-        updateConversationLastUpdate,
-        getNumberOfMessageForConversation,
-        null,
-        saveMessage,
-        null,
-        null,
-        null,
-        getProjectByKey,
-        dateTimeFactory: () => DateTime.utc(2020, 01, 01, 14, 30),
-      );
       realtime..addPeer(peer)..addPeer(other);
       await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
       await realtime.registerUser(Parameters('registerUser', {'id': '2'}), other);
-      final response = await realtime.sendMessage(Parameters('sendMessage', {'conversationId': '12', 'text': 'Hello world'}), peer);
+      final response = await realtime.sendMessage(Parameters('sendMessage', {'conversationId': '14', 'text': 'Hello world'}), peer);
       expect(response.isNotEmpty, isTrue);
       verifyNever(other.sendRequest('onConversationCreated', any));
-      verify(other.sendRequest('receiveMessage12', any)).called(1);
+      verify(other.sendRequest('receiveMessage14', any)).called(1);
       expect(
         DeepCollectionEquality().equals(response, {
           'id': '1',
           'senderId': '1',
           'text': 'Hello world',
           'timestamp': '2020-01-01T14:30:00.000Z',
-          'state': 0,
-          'stateDetails': [
-            {'userId': '2', 'state': 0},
+          'state': 'sent',
+          'states': [
+            {'id': '2', 'state': 'sent'},
           ]
         }),
         isTrue,
@@ -760,117 +500,56 @@ void main() {
     });
 
     test('first message in group conversation', () async {
-      final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('123', null, null, {'1'}, {'1', '2', '3'}, true));
-      final saveMessage = SaveMessageMock();
-      when(saveMessage.request(any)).thenAnswer((_) async => 1);
-      final updateConversationLastUpdate = UpdateConversationLastUpdateMock();
-      final getNumberOfMessageForConversation = GetNumberOfMessageForConversationMock();
-      when(getNumberOfMessageForConversation.request(any)).thenAnswer((_) async => 0);
-      final getProjectByKey = GetProjectByKeyMock();
-      when(getProjectByKey.request(any)).thenAnswer(
-        (_) async => Project(
-          production: ProjectInformations('toto', 'secret'),
-          development: ProjectInformations('toto_dev', 'secret'),
-        ),
-      );
       final peer = PeerMock();
       final other1 = PeerMock();
       final other2 = PeerMock();
-      final ioClient = IOClientMock();
-      final realtime = Realtime(
-        ProjectInformations('toto', null),
-        null,
-        getConversationById,
-        null,
-        updateConversationLastUpdate,
-        getNumberOfMessageForConversation,
-        null,
-        saveMessage,
-        null,
-        null,
-        null,
-        getProjectByKey,
-        dateTimeFactory: () => DateTime.utc(2020, 01, 01, 14, 30),
-        httpClient: ioClient,
-      );
       realtime..addPeer(peer)..addPeer(other1)..addPeer(other2);
       await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
       await realtime.registerUser(Parameters('registerUser', {'id': '2'}), other1);
       await realtime.registerUser(Parameters('registerUser', {'id': '3'}), other2);
-      final response = await realtime.sendMessage(Parameters('sendMessage', {'conversationId': '12', 'text': 'Hello world'}), peer);
+      final response = await realtime.sendMessage(Parameters('sendMessage', {'conversationId': '15', 'text': 'Hello world'}), peer);
       expect(response.isNotEmpty, isTrue);
       verifyNever(other1.sendRequest('onConversationCreated', any));
-      verify(other1.sendRequest('receiveMessage123', any)).called(1);
-      verify(other2.sendRequest('receiveMessage123', any)).called(1);
-      verifyNever(ioClient.post(any, body: anyNamed('body')));
+      verify(other1.sendRequest('receiveMessage15', any)).called(1);
+      verify(other2.sendRequest('receiveMessage15', any)).called(1);
+      verifyNever(realtime.httpClient.post(any, body: anyNamed('body')));
       expect(
         DeepCollectionEquality().equals(response, {
           'id': '1',
           'senderId': '1',
           'text': 'Hello world',
           'timestamp': '2020-01-01T14:30:00.000Z',
-          'state': 0,
-          'stateDetails': [
-            {'userId': '2', 'state': 0},
-            {'userId': '3', 'state': 0}
+          'state': 'sent',
+          'states': [
+            {'id': '2', 'state': 'sent'},
+            {'id': '3', 'state': 'sent'}
           ]
         }),
         isTrue,
       );
     });
 
-    test('with webhook', () async {
-      final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}, false));
-      final saveMessage = SaveMessageMock();
-      when(saveMessage.request(any)).thenAnswer((_) async => 1);
-      final updateConversationLastUpdate = UpdateConversationLastUpdateMock();
-      final getNumberOfMessageForConversation = GetNumberOfMessageForConversationMock();
-      when(getNumberOfMessageForConversation.request(any)).thenAnswer((_) async => 0);
-      final getProjectByKey = GetProjectByKeyMock();
-      when(getProjectByKey.request(any)).thenAnswer(
-        (_) async => Project(
-          production: ProjectInformations('toto', 'secret', webhook: 'http://test.com'),
-          development: ProjectInformations('toto_dev', 'secret', webhook: 'http://test.com'),
-        ),
-      );
+    test('with webHook', () async {
+      final realtimeWithWebHook = initRealtime('key-with-web-hook', withWebHook: true);
       final peer = PeerMock();
       final other = PeerMock();
-      final ioClient = IOClientMock();
-      final realtime = Realtime(
-        ProjectInformations('toto', null),
-        null,
-        getConversationById,
-        null,
-        updateConversationLastUpdate,
-        getNumberOfMessageForConversation,
-        null,
-        saveMessage,
-        null,
-        null,
-        null,
-        getProjectByKey,
-        dateTimeFactory: () => DateTime.utc(2020, 01, 01, 14, 30),
-        httpClient: ioClient,
-      );
-      realtime..addPeer(peer)..addPeer(other);
-      await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
-      await realtime.registerUser(Parameters('registerUser', {'id': '2'}), other);
-      final response = await realtime.sendMessage(Parameters('sendMessage', {'conversationId': '12', 'text': 'Hello world'}), peer);
+      realtimeWithWebHook..addPeer(peer)..addPeer(other);
+      await realtimeWithWebHook.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+      await realtimeWithWebHook.registerUser(Parameters('registerUser', {'id': '2'}), other);
+      final response = await realtimeWithWebHook.sendMessage(Parameters('sendMessage', {'conversationId': '13', 'text': 'Hello world'}), peer);
       expect(response.isNotEmpty, isTrue);
       verify(other.sendRequest('onConversationCreated', any)).called(1);
-      verifyNever(other.sendRequest('receiveMessage12', any));
-      verify(ioClient.post(any, body: anyNamed('body'))).called(1);
+      verifyNever(other.sendRequest('receiveMessage13', any));
+      verify(realtimeWithWebHook.httpClient.post(any, body: anyNamed('body'))).called(1);
       expect(
         DeepCollectionEquality().equals(response, {
           'id': '1',
           'senderId': '1',
           'text': 'Hello world',
           'timestamp': '2020-01-01T14:30:00.000Z',
-          'state': 0,
-          'stateDetails': [
-            {'userId': '2', 'state': 0},
+          'state': 'sent',
+          'states': [
+            {'id': '2', 'state': 'sent'},
           ]
         }),
         isTrue,
@@ -880,119 +559,69 @@ void main() {
 
   group('update message state', () {
     test('message not found', () async {
-      final getProjectByKey = GetProjectByKeyMock();
-      when(getProjectByKey.request(any)).thenAnswer(
-        (_) async => Project(
-          production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
-          development: ProjectInformations('toto_dev', 'secret'),
-        ),
-      );
-      final getMessageById = GetMessageByIdMock();
-      when(getMessageById.request(any)).thenAnswer((_) async => null);
       final peer = PeerMock();
-      final realtime = Realtime(ProjectInformations('toto', null), null, null, null, null, null, null, null, getMessageById, null, null, getProjectByKey);
       realtime.addPeer(peer);
       await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
       try {
-        await realtime.updateMessageState(Parameters('updateMessageState', {'id': '1', 'state': 2}), peer);
+        await realtime.updateMessageState(Parameters('updateMessageState', {'id': '1', 'state': messageStateToString(MessageState.sent)}), peer);
       } on RpcException catch (e) {
         expect(e.code, HttpStatus.notFound);
       }
     });
 
     test('seen to sent', () async {
-      final getProjectByKey = GetProjectByKeyMock();
-      when(getProjectByKey.request(any)).thenAnswer(
-        (_) async => Project(
-          production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
-          development: ProjectInformations('toto_dev', 'secret'),
-        ),
-      );
-      final getMessageById = GetMessageByIdMock();
-      when(getMessageById.request(any)).thenAnswer(
-        (_) async => Message('toto', '1', '12', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30), [
-          MessageStateByUser('1', MessageState.seen),
-        ]),
-      );
-      final realtime = Realtime(ProjectInformations('toto', null), null, null, null, null, null, null, null, getMessageById, null, null, getProjectByKey);
       final peer = PeerMock();
       realtime.addPeer(peer);
       await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
-      await realtime.updateMessageState(Parameters('updateMessageState', {'id': '1', 'state': MessageState.sent.index}), peer);
+      await realtime.updateMessageState(Parameters('updateMessageState', {'id': '1', 'state': messageStateToString(MessageState.sent)}), peer);
       verifyNever(peer.sendRequest(any));
     });
 
     test('sent to seen', () async {
-      final getProjectByKey = GetProjectByKeyMock();
-      when(getProjectByKey.request(any)).thenAnswer(
-        (_) async => Project(
-          production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
-          development: ProjectInformations('toto_dev', 'secret'),
-        ),
-      );
-      final getMessageById = GetMessageByIdMock();
-      when(getMessageById.request(any)).thenAnswer(
-        (_) async => Message('toto', '1', '12', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30),
-            [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.sent)]),
-      );
-      final udpateMessageState = UpdateMessageStateMock();
-      when(udpateMessageState.request(any)).thenAnswer(
-        (_) async => Message('toto', '1', '12', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30),
-            [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.seen)]),
-      );
-      final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}, false));
-      final realtime = Realtime(ProjectInformations('toto', null), null, getConversationById, null, null, null, null, null, getMessageById, udpateMessageState,
-          null, getProjectByKey);
       final peer = PeerMock();
       realtime.addPeer(peer);
       await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
       final other = PeerMock();
       realtime.addPeer(other);
       await realtime.registerUser(Parameters('registerUser', {'id': '2'}), other);
-      await realtime.updateMessageState(Parameters('updateMessageState', {'id': '2', 'state': MessageState.seen.index}), other);
-      verify(peer.sendRequest('updateMessageState12', {
-        'id': '1',
+      await realtime.updateMessageState(
+          Parameters('updateMessageState', <String, dynamic>{'id': '2', 'state': messageStateToString(MessageState.seen)}), other);
+      verify(peer.sendRequest('updateMessageState17', {
+        'id': '2',
         'senderId': '1',
         'text': 'Hello world',
         'timestamp': '2020-01-01T14:30:00.000Z',
-        'state': 2,
-        'stateDetails': [
-          {'userId': '2', 'state': 2}
+        'state': 'seen',
+        'states': [
+          {'id': '2', 'state': 'seen'}
         ]
       })).called(1);
     });
 
-    test('seen to seen', () async {
-      final getProjectByKey = GetProjectByKeyMock();
-      when(getProjectByKey.request(any)).thenAnswer(
-        (_) async => Project(
-          production: ProjectInformations('toto', 'mysecret', groupLimitation: 2),
-          development: ProjectInformations('toto_dev', 'secret'),
-        ),
-      );
-      final getMessageById = GetMessageByIdMock();
-      when(getMessageById.request(any)).thenAnswer(
-        (_) async => Message('toto', '1', '12', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30),
-            [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.seen)]),
-      );
-      final udpateMessageState = UpdateMessageStateMock();
-      when(udpateMessageState.request(any)).thenAnswer(
-        (_) async => Message('toto', '1', '12', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30),
-            [MessageStateByUser('1', MessageState.seen), MessageStateByUser('2', MessageState.seen)]),
-      );
-      final getConversationById = GetConversationByIdMock();
-      when(getConversationById.request(any)).thenAnswer((_) async => Conversation('12', null, null, {'1'}, {'1', '2'}, false));
-      final realtime = Realtime(ProjectInformations('toto', null), null, getConversationById, null, null, null, null, null, getMessageById, udpateMessageState,
-          null, getProjectByKey);
+    test('sent to seen send only to user in conversation', () async {
       final peer = PeerMock();
       realtime.addPeer(peer);
       await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
       final other = PeerMock();
       realtime.addPeer(other);
       await realtime.registerUser(Parameters('registerUser', {'id': '2'}), other);
-      await realtime.updateMessageState(Parameters('updateMessageState', {'id': '2', 'state': MessageState.seen.index}), other);
-      verifyNever(peer.sendRequest('updateMessageState12', any));
+      final other1 = PeerMock();
+      realtime.addPeer(other1);
+      await realtime.registerUser(Parameters('registerUser', {'id': '3'}), other1);
+      await realtime.updateMessageState(
+          Parameters('updateMessageState', <String, dynamic>{'id': '2', 'state': messageStateToString(MessageState.seen)}), other);
+      verifyNever(other1.sendRequest('updateMessageState17', any));
+    });
+
+    test('seen to seen', () async {
+      final peer = PeerMock();
+      realtime.addPeer(peer);
+      await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+      final other = PeerMock();
+      realtime.addPeer(other);
+      await realtime.registerUser(Parameters('registerUser', {'id': '2'}), other);
+      await realtime.updateMessageState(Parameters('updateMessageState', {'id': '3', 'state': messageStateToString(MessageState.seen)}), other);
+      verifyNever(peer.sendRequest('updateMessageState17', any));
     });
   });
 }

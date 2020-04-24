@@ -6,6 +6,7 @@ import 'package:backend/src/databases/message/get_last_message_for_conversation.
 import 'package:backend/src/databases/message/get_message_by_id.dart';
 import 'package:backend/src/databases/messages/get_messages_for_conversation.dart';
 import 'package:backend/src/databases/project/get_project_by_key.dart';
+import 'package:backend/src/databases/user/get_user_by_id.dart';
 
 class FromDatabase {
   final GetConversationByIdFromDatabase getConversationByIdFromDatabase;
@@ -18,8 +19,16 @@ class FromDatabase {
   final GetMessagesForConversationFromDatabase getMessagesForConversationFromDatabase;
 
   final GetProjectByKeyFromDatabase getProjectByKeyFromDatabase;
+  final GetProjectByIdFromDatabase getProjectByIdFromDatabase;
 
   final GetAccountByEmailFromDatabase getAccountByEmailFromDatabase;
+  final GetAccountByEmailAndPasswordFromDatabase getAccountByEmailAndPasswordFromDatabase;
+  final GetAccountByIdFromDatabase getAccountById;
+
+  final GetTokenFromDatabase getTokenFromDatabase;
+  final DeleteTokenFromDatabase deleteTokenFromDatabase;
+
+  final GetUserByIdFromDatabase getUserByIdFromDatabase;
 
   FromDatabase(
     this.getConversationByIdFromDatabase,
@@ -30,5 +39,11 @@ class FromDatabase {
     this.getMessagesForConversationFromDatabase,
     this.getProjectByKeyFromDatabase,
     this.getAccountByEmailFromDatabase,
+    this.getTokenFromDatabase,
+    this.getAccountByEmailAndPasswordFromDatabase,
+    this.getProjectByIdFromDatabase,
+    this.getUserByIdFromDatabase,
+    this.deleteTokenFromDatabase,
+    this.getAccountById,
   );
 }

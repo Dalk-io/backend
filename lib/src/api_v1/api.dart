@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:backend/src/api_v1/account/account.dart';
 import 'package:backend/src/api_v1/auth/auth.dart';
+import 'package:backend/src/api_v1/conversations/conversation.dart';
 import 'package:backend/src/api_v1/projects/project.dart';
 import 'package:backend/src/rpc/contact/parameters.dart';
 import 'package:backend/src/rpc/rpcs.dart';
@@ -21,16 +23,16 @@ class ApiV1 {
   ApiV1(this._rpcs);
 
   @Route.mount('/projects/')
-  Router get _projectService => ProjectService(
-        _rpcs.conversationRpcs,
-        _rpcs.conversationsRpcs,
-        _rpcs.messageRpcs,
-        _rpcs.messagesRpcs,
-        _rpcs.projectRpcs.getProjectByKey,
-      ).router;
+  Router get _projectService => ProjectService(_rpcs).router;
 
   @Route.mount('/auth/')
   Router get _authService => AuthService(_rpcs.accountRpcs, _rpcs.projectRpcs, _rpcs.tokenRpcs).router;
+
+  @Route.mount('/conversations/')
+  Router get _conversations => ConversationService(_rpcs).router;
+
+  @Route.mount('/accounts/')
+  Router get _accounts => AccountService(_rpcs).router;
 
   Router get router => _$ApiV1Router(this);
 

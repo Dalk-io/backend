@@ -6,3 +6,8 @@ part 'parameters.freezed.dart';
 abstract class SaveAccountParameters with _$SaveAccountParameters {
   const factory SaveAccountParameters(String firstName, String lastName, String email, String password, int projectId) = _SaveAccountParameters;
 }
+
+@freezed
+abstract class GetAccountByEmailAndPasswordParameters with _$GetAccountByEmailAndPasswordParameters {
+  const factory GetAccountByEmailAndPasswordParameters(String email, String password) = _GetAccountByEmailAndPasswordParameters;
+}

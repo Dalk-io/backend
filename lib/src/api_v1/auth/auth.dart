@@ -3,9 +3,14 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:backend/backend.dart';
-import 'package:backend/src/models/project.dart';
+import 'package:backend/src/api_v1/auth/models/is_logged/is_logged.dart';
+import 'package:backend/src/api_v1/auth/models/login/login.dart';
+import 'package:backend/src/api_v1/auth/models/register/register.dart';
+import 'package:backend/src/data/account/account.dart';
+import 'package:backend/src/data/project/project.dart';
 import 'package:backend/src/rpc/account/parameters.dart';
 import 'package:backend/src/rpc/token/parameters.dart';
+import 'package:backend/src/utils/check_request_parameters.dart';
 import 'package:crypto/crypto.dart';
 import 'package:meta/meta.dart';
 import 'package:shelf/shelf.dart';
@@ -28,57 +33,72 @@ class AuthService {
   @Route.post('/login')
   Future<Response> login(Request request) async {
     final body = (json.decode(await request.readAsString()) as Map).cast<String, String>();
-    final missingParameters = <String>[];
-    if (!body.keys.contains('email')) {
-      missingParameters.add('email');
+    final checkParametersResponse = checkRequestParameters(['email', 'password'], body);
+    if (checkParametersResponse != null) {
+      return checkParametersResponse;
     }
-    if (!body.keys.contains('password')) {
-      missingParameters.add('password');
+    final encryptedPassword = sha512.convert(utf8.encode(body['password'])).toString();
+    final account = await _accountRpcs.getAccountByEmailAndPassword.request(GetAccountByEmailAndPasswordParameters(body['email'], encryptedPassword));
+    if (account == null) {
+      return Response.notFound('');
     }
-    if (missingParameters.isNotEmpty) {
-      return Response(
-        HttpStatus.badRequest,
-        body: json.encode({
-          'message': 'Missing required parameters',
-          'data': missingParameters,
-        }),
-      );
+    final token = _generateToken();
+    await _tokenRpcs.saveToken.request(SaveTokenParameters(token, account.id, DateTime.now().toUtc()));
+    final project = await _projectRpcs.getProjectById.request(account.projectId);
+    final response = LoginDataResponse(token, account.copyWith(projectId: null, password: null), project);
+    return Response(
+      HttpStatus.ok,
+      body: json.encode(response.toJson()),
+    );
+  }
+
+  @Route.get('/is_logged')
+  Future<Response> isLogged(Request request) async {
+    final token = request.headers[HttpHeaders.authorizationHeader];
+    if (token == null) {
+      return Response(HttpStatus.badRequest);
     }
-    // await _login(body['email'], body['password']);
-    return Response(HttpStatus.notImplemented, body: 'not implemented');
+    final tokenData = await _tokenRpcs.getToken.request(token);
+    if (tokenData == null) {
+      return Response(HttpStatus.unauthorized);
+    }
+    final accountData = await _accountRpcs.getAccountById.request(tokenData.accountId);
+    final projectsData = await _projectRpcs.getProjectById.request(accountData.projectId);
+    final response = IsLoggedDataResponse(tokenData.token, accountData.copyWith(password: null, projectId: null), projectsData);
+    return Response(
+      HttpStatus.ok,
+      body: json.encode(response.toJson()),
+    );
   }
 
   @Route.post('/logout')
   Future<Response> logout(Request request) async {
-    return Response(HttpStatus.notImplemented, body: 'not implemented');
+    final token = request.headers[HttpHeaders.authorizationHeader];
+    if (token == null) {
+      return Response(HttpStatus.badRequest);
+    }
+    await _tokenRpcs.deleteToken.request(token);
+    return Response(HttpStatus.ok);
   }
 
   @Route.post('/register')
   Future<Response> register(Request request) async {
     final body = (json.decode(await request.readAsString()) as Map).cast<String, String>();
-    final missingParameters = <String>[];
-    if (!body.keys.contains('lastName')) {
-      missingParameters.add('lastName');
+    final checkParametersResponse = checkRequestParameters(['lastName', 'firstName', 'email', 'password', 'subscriptionType'], body);
+    if (checkParametersResponse != null) {
+      return checkParametersResponse;
     }
-    if (!body.keys.contains('firstName')) {
-      missingParameters.add('firstName');
-    }
-    if (!body.keys.contains('email')) {
-      missingParameters.add('email');
-    }
-    if (!body.keys.contains('password')) {
-      missingParameters.add('password');
-    }
-    if (missingParameters.isNotEmpty) {
+    if (!['starter', 'complete'].contains(body['subscriptionType'])) {
       return Response(
         HttpStatus.badRequest,
         body: json.encode({
-          'message': 'Missing required parameters',
-          'data': missingParameters,
+          'message': 'Bad required parameters',
+          'data': 'Supported value are [starter|complete]',
         }),
       );
     }
-    final password = body['password'];
+    final registerData = RegisterDataRequest.fromJson(body);
+    final password = registerData.password;
     if (password.length < 8) {
       return Response(
         HttpStatus.badRequest,
@@ -89,14 +109,14 @@ class AuthService {
       );
     }
     final encryptedPassword = sha512.convert(utf8.encode(password)).toString();
-    final firstName = body['firstName'];
-    final lastName = body['lastName'];
-    final email = body['email'];
+    final firstName = registerData.firstName;
+    final lastName = registerData.lastName;
+    final email = registerData.email;
     final account = await _accountRpcs.getAccountByEmail.request(email);
     if (account != null) {
       return Response(HttpStatus.conflict, body: json.encode({'message': 'Account already exist', 'data': email}));
     }
-    final token = await _login(email, password);
+    final token = _generateToken();
     final uuid = Uuid(options: <String, dynamic>{'grng': UuidUtil.cryptoRNG});
     final developmentKeyUuid = uuid.v1(
       options: <String, dynamic>{
@@ -105,35 +125,25 @@ class AuthService {
     );
     final developmentKey = 'dev_$developmentKeyUuid';
     final developmentSecretHash = sha512
-        .convert(utf8.encode(uuid.v1(
-          options: <String, dynamic>{
-            'positionalArgs': [Random.secure().nextInt(20000)]
-          },
-        )))
+        .convert(utf8.encode(uuid.v1(options: <String, dynamic>{
+          'positionalArgs': [Random.secure().nextInt(20000)]
+        })))
         .toString();
     final developmentSecret = 'dev_$developmentSecretHash';
-    final project = Project(development: ProjectInformations(developmentKey, developmentSecret, groupLimitation: 5));
+    final project = ProjectsData(ProjectEnvironment(developmentKey, developmentSecret), SubscriptionType.starter);
     final projectId = await _projectRpcs.saveProject.request(project);
     final accountId = await _accountRpcs.saveAccount.request(SaveAccountParameters(firstName, lastName, email, encryptedPassword, projectId));
     await _tokenRpcs.saveToken.request(SaveTokenParameters(token, accountId, DateTime.now().toUtc()));
+    final response = RegisterDataResponse(token, AccountData(id: accountId, firstName: firstName, lastName: lastName, email: email), project);
     return Response(
       HttpStatus.created,
-      body: json.encode(
-        {
-          'token': token,
-          'user': {
-            'email': email,
-            'developmentKey': developmentKey,
-            'developmentSecret': developmentSecret,
-          }
-        },
-      ),
+      body: json.encode(response.toJson()),
     );
   }
 
-  Future<String> _login(String email, String password) async {
+  String _generateToken() {
     final uuid = Uuid(options: <String, dynamic>{'grng': UuidUtil.cryptoRNG});
-    final id = uuid.v1(options: <String, dynamic>{
+    final id = uuid.v4(options: <String, dynamic>{
       'positionalArgs': [Random().nextInt(2000)],
     });
     final token = sha512.convert(utf8.encode(id)).toString();

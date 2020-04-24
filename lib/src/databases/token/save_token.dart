@@ -7,11 +7,11 @@ class SaveTokenToDatabase extends DatabaseEndpoint<SaveTokenParameters> {
       : super(
           pgPool,
           (input) => pgPool.query(
-            'INSERT INTO tokens (accountId, token, created) VALUES (@accountId, @token, @created)',
+            'INSERT INTO tokens (accountId, token, createdAt) VALUES (@accountId, @token, @created)',
             substitutionValues: <String, dynamic>{
               'accountId': input.accountId,
               'token': input.token,
-              'created': input.created,
+              'created': input.createdAt,
             },
           ),
         );

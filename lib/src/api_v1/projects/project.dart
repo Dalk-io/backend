@@ -1,13 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:backend/backend.dart';
 import 'package:backend/src/api_v1/projects/realtime.dart';
-import 'package:backend/src/rpc/conversation/conversation.dart';
-import 'package:backend/src/rpc/conversations/conversations.dart';
-import 'package:backend/src/rpc/message/message.dart';
-import 'package:backend/src/rpc/messages/messages.dart';
+import 'package:backend/src/data/project/project.dart';
 import 'package:backend/src/middlewares/check_project_exist.dart';
-import 'package:backend/src/models/project.dart';
-import 'package:backend/src/rpc/project/get_project_by_key.dart';
 import 'package:json_rpc_2/json_rpc_2.dart';
 import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
@@ -19,63 +16,64 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 part 'project.g.dart';
 
 typedef PeerFactory = Peer Function(WebSocketChannel);
-Peer _peerFactory(WebSocketChannel websocket) => Peer(websocket.cast<String>());
+Peer _peerFactory(WebSocketChannel webSocket) => Peer(webSocket.cast<String>());
 
 @immutable
 class ProjectService {
-  final ConversationRpcs _conversationRpcs;
-  final ConversationsRpcs _conversationsRpcs;
-  final MessageRpcs _messageRpcs;
-  final MessagesRpcs _messagesRpcs;
-  final GetProjectByKey _getProjectByKey;
+  final Rpcs _rpcs;
 
-  final Map<String, Realtime> _realtimes = <String, Realtime>{};
+  final Map<String, Realtime> _realtime = <String, Realtime>{};
   final _logger = Logger('ProjectService');
   final PeerFactory peerFactory;
 
-  ProjectService(this._conversationRpcs, this._conversationsRpcs, this._messageRpcs, this._messagesRpcs, this._getProjectByKey,
-      {this.peerFactory = _peerFactory});
+  ProjectService(this._rpcs, {this.peerFactory = _peerFactory});
+
+  @visibleForTesting
+  Map<String, Realtime> get realtime => _realtime;
 
   Router get router => _$ProjectServiceRouter(this);
 
-  @visibleForTesting
-  Map<String, Realtime> get realtimes => _realtimes;
-
   @Route.get('/<id>/ws')
   FutureOr<Response> project(Request request) => Pipeline()
-      .addMiddleware(checkProjectExistMiddleware(_getProjectByKey))
-      .addHandler((request) => webSocketHandler((WebSocketChannel websocket) => onWebSocket(request, websocket))(request))(request);
+      .addMiddleware(checkProjectExistMiddleware(_rpcs.projectRpcs.getProjectByKey))
+      .addHandler((request) => webSocketHandler((WebSocketChannel webSocket) => onWebSocket(request, webSocket))(request))(request);
 
-  Future<void> onWebSocket(Request request, WebSocketChannel websocket) async {
+  @Route.post('/<projectId>')
+  Future<Response> updateProject(Request request) async {
+    return Response(HttpStatus.notImplemented);
+  }
+
+  Future<void> onWebSocket(Request request, WebSocketChannel webSocket) async {
     final logger = Logger('${_logger.name}.onWebSocket');
-    final peer = peerFactory(websocket);
-    final projectInformations = request.context['projectInformations'] as ProjectInformations;
-    _realtimes.putIfAbsent(
-      projectInformations.key,
+    final peer = peerFactory(webSocket);
+    final projectData = request.context['projectEnvironment'] as ProjectEnvironment;
+    _realtime.putIfAbsent(
+      projectData.key,
       () => Realtime(
-        projectInformations,
-        _conversationRpcs.updateConversationSubjectAndAvatar,
-        _conversationRpcs.getConversationById,
-        _conversationRpcs.saveConversation,
-        _conversationRpcs.updateConversationLastUpdate,
-        _conversationRpcs.getNumberOfMessageForConversation,
-        _conversationsRpcs.getConversationsForUser,
-        _messageRpcs.saveMessage,
-        _messageRpcs.getMessageById,
-        _messageRpcs.updateMessageState,
-        _messagesRpcs.getMessagesForConversation,
-        _getProjectByKey,
+        projectData.key,
+        _rpcs.conversationRpcs.updateConversationSubjectAndAvatar,
+        _rpcs.conversationRpcs.getConversationById,
+        _rpcs.conversationRpcs.saveConversation,
+        _rpcs.conversationRpcs.updateConversationLastUpdate,
+        _rpcs.conversationRpcs.getNumberOfMessageForConversation,
+        _rpcs.conversationsRpcs.getConversationsForUser,
+        _rpcs.messageRpcs.saveMessage,
+        _rpcs.messageRpcs.getMessageById,
+        _rpcs.messageRpcs.updateMessageState,
+        _rpcs.messagesRpcs.getMessagesForConversation,
+        _rpcs.projectRpcs.getProjectByKey,
+        _rpcs.userRpcs,
       ),
     );
-    final realtime = _realtimes[projectInformations.key];
+    final realtime = _realtime[projectData.key];
     realtime.addPeer(peer);
     logger.info('Number of connected peers ${realtime.connectedPeers.length}');
     await peer.listen();
-    realtime.removePeer(peer);
+    await realtime.removePeer(peer);
     logger.info('Number of connected peers ${realtime.connectedPeers.length}');
     if (realtime.connectedPeers.isEmpty) {
-      logger.info('Remove project ${projectInformations.key}');
-      _realtimes.remove(projectInformations.key);
+      logger.info('Remove project ${projectData.key}');
+      _realtime.remove(projectData.key);
     }
   }
 }

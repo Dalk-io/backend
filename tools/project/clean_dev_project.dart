@@ -13,9 +13,9 @@ void main() async {
     settings: PgPoolSettings()..concurrency = 10,
   );
 
-  await pg.execute('DELETE FROM users WHERE projectId LIKE \'%dev%\';');
-  await pg.execute('DELETE FROM messages WHERE projectId LIKE \'%dev%\';');
-  await pg.execute('DELETE FROM conversations WHERE projectId LIKE \'%dev%\';');
+  await pg.execute('DELETE FROM users WHERE projectId LIKE \'dev_%\';');
+  await pg.execute('DELETE FROM messages WHERE projectId LIKE \'dev_%\';');
+  await pg.execute('DELETE FROM conversations WHERE projectId LIKE \'dev_%\';');
 
   await pg.close();
 }

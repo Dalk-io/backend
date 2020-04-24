@@ -1,15 +1,9 @@
-import 'dart:io';
-
-import 'package:backend/src/models/project.dart';
+import 'package:backend/src/data/project/project.dart';
 import 'package:postgres_pool/postgres_pool.dart';
 import 'package:uuid/uuid.dart';
 import 'package:uuid/uuid_util.dart';
 
 void main(List<String> arguments) async {
-  if (arguments.length != 1) {
-    print('this script take only one parameters which is the project name');
-    exit(1);
-  }
   final pg = PgPool(
     PgEndpoint(
       host: '51.159.26.58',
@@ -25,35 +19,19 @@ void main(List<String> arguments) async {
   final uuid = Uuid(options: <String, dynamic>{'grng': UuidUtil.cryptoRNG});
   final groupLimitation = -1;
   final secure = true;
-  final projectName = arguments.first;
 
-  final prodKey = '${projectName}_prod_${uuid.v1(options: <String, dynamic>{
-    'positionalArgs': [1]
-  })}';
-  final prodSecret = '${projectName}_prod_${uuid.v1(options: <String, dynamic>{
-    'positionalArgs': [2]
-  })}';
-
-  final devKey = '${projectName}_dev_${uuid.v1(options: <String, dynamic>{
+  final devKey = 'dev_${uuid.v1(options: <String, dynamic>{
     'positionalArgs': [4]
   })}';
-  final devSecret = '${projectName}_dev_${uuid.v1(options: <String, dynamic>{
+  final devSecret = 'dev_${uuid.v1(options: <String, dynamic>{
     'positionalArgs': [8]
   })}';
 
-  final project = Project(
-    production: ProjectInformations(
-      prodKey,
-      prodSecret,
-      groupLimitation: groupLimitation,
-      secure: secure,
-    ),
-    development: ProjectInformations(
-      devKey,
-      devSecret,
-      groupLimitation: groupLimitation,
-      secure: secure,
-    ),
+  final project = ProjectsData(
+    ProjectEnvironment(devKey, devSecret),
+    SubscriptionType.starter,
+    groupLimitation: groupLimitation,
+    isSecure: secure,
   );
 
   print(project);
@@ -62,22 +40,22 @@ void main(List<String> arguments) async {
     '''INSERT INTO projects (
   productionKey, 
   productionSecret, 
-  productionWebhook, 
+  productionWebHook, 
   developmentKey,
   developmentSecret,
-  developmentWebhook,
+  developmentWebHook,
   groupLimitation,
   secure
-) VALUES (@name, @productionKey, @productionSecret, @productionWebhook, @developmentKey, @developmentSecret, @developmentWebhook, @groupLimitation, @secure)''',
+) VALUES (@name, @productionKey, @productionSecret, @productionWebHook, @developmentKey, @developmentSecret, @developmentWebHook, @groupLimitation, @secure)''',
     substitutionValues: <String, dynamic>{
-      'productionKey': project.production.key,
-      'productionSecret': project.production.secret,
-      'productionWebhook': project.production.webhook,
+      'productionKey': project.production?.key,
+      'productionSecret': project.production?.secret,
+      'productionWebHook': project.production?.webHook,
       'developmentKey': project.development.key,
       'developmentSecret': project.development.secret,
-      'developmentWebhook': project.development.webhook,
-      'groupLimitation': project.development.groupLimitation,
-      'secure': project.production.secure,
+      'developmentWebHook': project.development.webHook,
+      'groupLimitation': project.groupLimitation,
+      'secure': project.isSecure,
     },
   );
 

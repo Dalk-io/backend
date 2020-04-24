@@ -4,5 +4,6 @@ part 'parameters.freezed.dart';
 
 @freezed
 abstract class GetMessagesForConversationParameters with _$GetMessagesForConversationParameters {
-  const factory GetMessagesForConversationParameters(String projectId, String conversationId, int from, int to) = _GetMessagesForConversationParameters;
+  const factory GetMessagesForConversationParameters(String projectId, String conversationId, {@Default(0) int from, @Default(-1) int to}) =
+      _GetMessagesForConversationParameters;
 }

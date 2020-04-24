@@ -31,6 +31,7 @@ void main(List<String> arguments) async {
   final conversationsRpcs = generateConversationsRpcs(fromDatabase, toDatabase);
   final accountRpcs = generateAccountRpcs(fromDatabase, toDatabase);
   final tokenRpcs = generateTokenRpcs(fromDatabase, toDatabase);
+  final userRpcs = generateUserRpcs(fromDatabase, toDatabase);
 
   final rpcs = generateRpcs(
     messageRpcs,
@@ -41,6 +42,7 @@ void main(List<String> arguments) async {
     projectRpcs,
     accountRpcs,
     tokenRpcs,
+    userRpcs,
   );
 
   final backend = Backend(rpcs);
@@ -62,6 +64,12 @@ FromDatabase generateFromDatabase(PgPool pgPool) => FromDatabase(
       GetMessagesForConversationFromDatabase(pgPool),
       GetProjectByKeyFromDatabase(pgPool),
       GetAccountByEmailFromDatabase(pgPool),
+      GetTokenFromDatabase(pgPool),
+      GetAccountByEmailAndPasswordFromDatabase(pgPool),
+      GetProjectByIdFromDatabase(pgPool),
+      GetUserByIdFromDatabase(pgPool),
+      DeleteTokenFromDatabase(pgPool),
+      GetAccountByIdFromDatabase(pgPool),
     );
 
 ToDatabase generateToDatabase(PgPool pgPool) => ToDatabase(
@@ -74,6 +82,8 @@ ToDatabase generateToDatabase(PgPool pgPool) => ToDatabase(
       SaveAccountToDatabase(pgPool),
       SaveProjectToDatabase(pgPool),
       SaveTokenToDatabase(pgPool),
+      SaveUserToDatabase(pgPool),
+      UpdateUserByIdFromDatabase(pgPool),
     );
 
 MessageRpcs generateMessageRpcs(FromDatabase from, ToDatabase to) => MessageRpcs(
@@ -85,7 +95,11 @@ MessageRpcs generateMessageRpcs(FromDatabase from, ToDatabase to) => MessageRpcs
 MessagesRpcs generateMessagesRpcs(FromDatabase from, ToDatabase to) => MessagesRpcs(GetMessagesForConversation(from.getMessagesForConversationFromDatabase));
 
 ConversationRpcs generateConversationRpcs(FromDatabase from, ToDatabase to) => ConversationRpcs(
-      GetConversationById(from.getConversationByIdFromDatabase, GetMessagesForConversation(from.getMessagesForConversationFromDatabase)),
+      GetConversationById(
+        from.getConversationByIdFromDatabase,
+        GetMessagesForConversation(from.getMessagesForConversationFromDatabase),
+        GetUserById(from.getUserByIdFromDatabase),
+      ),
       SaveConversation(to.saveConversationToDatabase),
       UpdateConversationLastUpdate(to.updateConversationLastUpdateToDatabase),
       UpdateConversationSubjectAndAvatar(to.updateConversationSubjectAndAvatarToDatabase),
@@ -93,7 +107,11 @@ ConversationRpcs generateConversationRpcs(FromDatabase from, ToDatabase to) => C
     );
 
 ConversationsRpcs generateConversationsRpcs(FromDatabase from, ToDatabase to) => ConversationsRpcs(
-      GetConversationsForUser(from.getConversationsForUserFromDatabase, from.getLastMessageForConversationFromDatabase),
+      GetConversationsForUser(
+        from.getConversationsForUserFromDatabase,
+        from.getLastMessageForConversationFromDatabase,
+        GetUserById(from.getUserByIdFromDatabase),
+      ),
     );
 
 ContactRpcs generateContactRpcs(FromDatabase from, ToDatabase to) => ContactRpcs(SaveContact(to.saveContactToDatabase));
@@ -101,14 +119,27 @@ ContactRpcs generateContactRpcs(FromDatabase from, ToDatabase to) => ContactRpcs
 ProjectRpcs generateProjectRpcs(FromDatabase from, ToDatabase to) => ProjectRpcs(
       GetProjectByKey(from.getProjectByKeyFromDatabase),
       SaveProject(to.saveProjectToDatabase),
+      GetProjectById(from.getProjectByIdFromDatabase),
     );
 
 AccountRpcs generateAccountRpcs(FromDatabase from, ToDatabase to) => AccountRpcs(
       SaveAccount(to.saveAccountToDatabase),
       GetAccountByEmail(from.getAccountByEmailFromDatabase),
+      GetAccountByEmailAndPassword(from.getAccountByEmailAndPasswordFromDatabase),
+      GetAccountById(from.getAccountById),
     );
 
-TokenRpcs generateTokenRpcs(FromDatabase from, ToDatabase to) => TokenRpcs(SaveToken(to.saveTokenToDatabase));
+TokenRpcs generateTokenRpcs(FromDatabase from, ToDatabase to) => TokenRpcs(
+      SaveToken(to.saveTokenToDatabase),
+      GetToken(from.getTokenFromDatabase),
+      DeleteToken(from.deleteTokenFromDatabase),
+    );
+
+UserRpcs generateUserRpcs(FromDatabase from, ToDatabase to) => UserRpcs(
+      SaveUser(to.saveUserToDatabase),
+      GetUserById(from.getUserByIdFromDatabase),
+      UpdateUserById(to.updateUserByIdFromDatabase),
+    );
 
 Rpcs generateRpcs(
   MessageRpcs messageRpcs,
@@ -119,6 +150,7 @@ Rpcs generateRpcs(
   ProjectRpcs projectRpcs,
   AccountRpcs accountRpcs,
   TokenRpcs tokenRpcs,
+  UserRpcs userRpcs,
 ) =>
     Rpcs(
       messageRpcs,
@@ -129,4 +161,5 @@ Rpcs generateRpcs(
       projectRpcs,
       accountRpcs,
       tokenRpcs,
+      userRpcs,
     );

@@ -1,3 +1,4 @@
+import 'package:backend/backend.dart';
 import 'package:backend/src/rpc/account/account.dart';
 import 'package:backend/src/rpc/contact/contact.dart';
 import 'package:backend/src/rpc/conversation/conversation.dart';
@@ -16,6 +17,7 @@ class Rpcs {
   final ProjectRpcs projectRpcs;
   final AccountRpcs accountRpcs;
   final TokenRpcs tokenRpcs;
+  final UserRpcs userRpcs;
 
   Rpcs(
     this.messageRpcs,
@@ -26,5 +28,6 @@ class Rpcs {
     this.projectRpcs,
     this.accountRpcs,
     this.tokenRpcs,
+    this.userRpcs,
   );
 }

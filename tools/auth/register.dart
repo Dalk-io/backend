@@ -10,6 +10,7 @@ void main() async {
           'lastName': 'Dalk',
           'email': 'dev@dalk.io',
           'password': 'tata-fr-dalk',
+          'subscriptionType': 'starter',
         },
       ));
   print(response.body);

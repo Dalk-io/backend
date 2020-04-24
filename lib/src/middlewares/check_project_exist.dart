@@ -18,7 +18,7 @@ Middleware checkProjectExistMiddleware(GetProjectByKey getProjectByKey) => (Hand
           request.change(
             context: {
               ...request.context,
-              'projectInformations': projectId == project.development.key ? project.development : project.production,
+              'projectEnvironment': projectId == project.development.key ? project.development : project.production,
             },
           ),
         );
