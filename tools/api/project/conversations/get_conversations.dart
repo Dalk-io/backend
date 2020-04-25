@@ -1,18 +1,19 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:backend/src/utils/pretty_print_json.dart';
 import 'package:http/http.dart' as http;
 
 void main(List<String> arguments) async {
   final response = await http.get(
-    'http://localhost:443/v1/projects/dev_cb76ca50-8635-11ea-e3cb-ebee2a9893a6/conversations',
+    'http://localhost:443/v1/projects/dev_70e9bfc0-86f8-11ea-8600-dba352199d7a/conversations',
     headers: {
       HttpHeaders.authorizationHeader: arguments.first,
     },
   );
-  print(response.statusCode);
-  print(response.body);
-  final encoder = JsonEncoder.withIndent('  ');
-  final prettyprint = encoder.convert(json.decode(response.body));
-  print(prettyprint);
+  if (response.statusCode != 200) {
+    print(response.statusCode);
+    return;
+  }
+  prettyPrintJson(json.decode(response.body) as List);
 }
