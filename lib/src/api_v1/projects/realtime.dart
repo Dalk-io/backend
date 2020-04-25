@@ -189,7 +189,7 @@ class Realtime {
     final userConversations = await _getConversationsForUser.request(GetConversationsForUserParameters(projectKey, _user.data.id));
     final response = userConversations.map((conversation) {
       final conversationJson = conversation.toJson();
-      conversationJson['messages'] = _messageToJson(conversation.messages.first);
+      conversationJson['messages'] = [_messageToJson(conversation.messages.first)];
       return conversationJson;
     }).toList(growable: false);
     logger.info('getConversations took ${sw.elapsed}');
