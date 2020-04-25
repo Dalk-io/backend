@@ -26,13 +26,13 @@ jobs:
       - name: Upload backend
         run: |
           scp -r bin lib pubspec.yaml pubspec.lock root@51.15.215.104:/root/backend
-      # - name: Connect to server and launch new version
-      #   run: |
-      #     ssh root@51.15.215.104 /bin/bash << EOF
-      #       cd backend
-      #       /usr/lib/dart/bin/pub get
-      #       /usr/lib/dart/bin/pub run build_runner build
-      #       cd ..
-      #       killall dart || echo "Process was not running."
-      #       /usr/lib/dart/bin/dart backend/bin/main.dart >> backend.log &
-      #     EOF
+      - name: Connect to server and launch new version
+        run: |
+          ssh root@51.15.215.104 /bin/bash << EOF
+            killall dart || echo "Process was not running."
+            cd backend
+            /usr/lib/dart/bin/pub get
+            /usr/lib/dart/bin/pub run build_runner build
+            cd ..
+            /usr/lib/dart/bin/dart backend/bin/main.dart >> backend.log &
+          EOF
