@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 
 void main(List<String> arguments) async {
   final response = await http.get(
-    'http://localhost:443/v1/projects/dev_70e9bfc0-86f8-11ea-8600-dba352199d7a/conversations',
+    'http://localhost:443/v1/projects/dev_5a7485b0-870a-11ea-ccaa-79b555c1a36f/conversations',
     headers: {
       HttpHeaders.authorizationHeader: arguments.first,
     },

@@ -25,12 +25,13 @@ void main() async {
   productionKey TEXT, 
   productionSecret TEXT, 
   productionWebHook TEXT, 
+  productionSecure boolean,
   developmentKey TEXT NOT NULL,
   developmentSecret TEXT NOt NULL,
   developmentWebHook TEXT,
+  developmentSecure boolean NOT NULL,
   plan INTEGER,
-  groupLimitation int NOT NULL,
-  secure boolean NOT NULL
+  groupLimitation int NOT NULL
 )''');
   await pg.execute('CREATE TABLE IF NOT EXISTS users (projectId TEXT NOT NULL, id TEXT NOT NULL, name TEXT, avatar TEXT, state INTEGER);');
   await pg.execute(

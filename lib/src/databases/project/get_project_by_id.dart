@@ -6,7 +6,7 @@ class GetProjectByIdFromDatabase extends DatabaseEndpoint<int> {
       : super(
           pgPool,
           (input) => pgPool.query(
-            'SELECT productionKey, productionSecret, productionWebHook, developmentKey, developmentSecret, developmentWebHook, plan, groupLimitation, secure FROM projects WHERE id = @id',
+            'SELECT id, productionKey, productionSecret, productionWebHook, productionSecure, developmentKey, developmentSecret, developmentWebHook, developmentSecure, plan, groupLimitation FROM projects WHERE id = @id',
             substitutionValues: <String, int>{
               'id': input,
             },

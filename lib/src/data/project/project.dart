@@ -10,6 +10,7 @@ abstract class ProjectEnvironment with _$ProjectEnvironment {
     @JsonKey(includeIfNull: false) String key,
     @JsonKey(includeIfNull: false) String secret, {
     @nullable @JsonKey(includeIfNull: false) String webHook,
+    @Default(false) bool isSecure,
   }) = _ProjectEnvironment;
 
   factory ProjectEnvironment.fromJson(Map<String, dynamic> json) => _$ProjectEnvironmentFromJson(json);
@@ -29,7 +30,6 @@ abstract class ProjectsData with _$ProjectsData {
     @nullable @JsonKey(includeIfNull: false) int id,
     @nullable @JsonKey(includeIfNull: false) ProjectEnvironment production,
     @Default(5) int groupLimitation,
-    @Default(false) bool isSecure,
   }) = _ProjectsData;
 
   factory ProjectsData.fromJson(Map<String, dynamic> json) => _$ProjectsDataFromJson(json);

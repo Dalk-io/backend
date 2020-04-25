@@ -44,8 +44,8 @@ class AuthService {
     }
     final token = _generateToken();
     await _tokenRpcs.saveToken.request(SaveTokenParameters(token, account.id, DateTime.now().toUtc()));
-    final project = await _projectRpcs.getProjectById.request(account.projectId);
-    final response = LoginDataResponse(token, account.copyWith(projectId: null, password: null), project);
+    final projectData = await _projectRpcs.getProjectById.request(account.projectId);
+    final response = LoginDataResponse(token, account.copyWith(projectId: null, password: null), projectData.copyWith(id: null));
     return Response(
       HttpStatus.ok,
       body: json.encode(response.toJson()),
@@ -64,7 +64,7 @@ class AuthService {
     }
     final accountData = await _accountRpcs.getAccountById.request(tokenData.accountId);
     final projectsData = await _projectRpcs.getProjectById.request(accountData.projectId);
-    final response = IsLoggedDataResponse(tokenData.token, accountData.copyWith(password: null, projectId: null), projectsData);
+    final response = IsLoggedDataResponse(tokenData.token, accountData.copyWith(password: null, projectId: null), projectsData.copyWith(id: null));
     return Response(
       HttpStatus.ok,
       body: json.encode(response.toJson()),

@@ -139,7 +139,7 @@ class Realtime {
     final avatar = parameters['avatar'].asStringOr(null);
     final project = await _getProjectByKey.request(projectKey);
     final environment = projectKey == project.production?.key ? project.production : project.development;
-    if (project.isSecure) {
+    if (environment.isSecure) {
       final _signature = sha512.convert(utf8.encode('$id${environment.secret}')).toString();
       if (signature != _signature) {
         logger.warning('signature not valid received ${signature} but waiting ${_signature}');

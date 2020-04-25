@@ -5,11 +5,11 @@ import 'package:http/http.dart' as http;
 
 void main(List<String> arguments) async {
   final response = await http.patch(
-    'http://localhost:443/v1/projects/dev_70e9bfc0-86f8-11ea-8600-dba352199d7a/',
+    'http://localhost:443/v1/projects/dev_5a7485b0-870a-11ea-ccaa-79b555c1a36f/',
     headers: {
       HttpHeaders.authorizationHeader: arguments.first,
     },
-    body: json.encode({'isSecure': true, 'webHook': null}),
+    body: json.encode({'isSecure': false, 'webHook': null}),
   );
   print(response.statusCode);
   print(response.body);

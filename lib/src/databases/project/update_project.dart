@@ -7,12 +7,13 @@ class UpdateProjectToDatabase extends DatabaseEndpoint<UpdateProjectParameters> 
       : super(
           pgPool,
           (input) => pgPool.query(
-            'UPDATE projects SET productionWebHook = @productionWebHook, developmentWebHook = @developmentWebHook, secure = @isSecure WHERE id = @projectId',
+            'UPDATE projects SET productionWebHook = @productionWebHook, developmentWebHook = @developmentWebHook, productionSecure = @productionSecure, developmentSecure = @developmentSecure WHERE id = @projectId',
             substitutionValues: <String, dynamic>{
               'projectId': input.projectId,
               'productionWebHook': input.productionWebHook,
               'developmentWebHook': input.developmentWebHook,
-              'isSecure': input.isSecure,
+              'productionSecure': input.productionIsSecure,
+              'developmentSecure': input.developmentIsSecure,
             },
           ),
         );

@@ -7,17 +7,18 @@ class SaveProjectToDatabase extends DatabaseEndpoint<ProjectsData> {
       : super(
           pgPool,
           (input) => pgPool.query(
-            'INSERT INTO projects (productionKey, productionSecret, productionWebHook, developmentKey, developmentSecret, developmentWebHook, plan, groupLimitation, secure) VALUES (@productionKey, @productionSecret, @productionWebHook, @developmentKey, @developmentSecret, @developmentWebHook, @plan, @groupLimitation, @secure) RETURNING id;',
+            'INSERT INTO projects (productionKey, productionSecret, productionWebHook, productionSecure, developmentKey, developmentSecret, developmentWebHook, developmentSecure, plan, groupLimitation) VALUES (@productionKey, @productionSecret, @productionWebHook, @productionSecure, @developmentKey, @developmentSecret, @developmentWebHook, @developmentSecure, @plan, @groupLimitation) RETURNING id;',
             substitutionValues: <String, dynamic>{
               'productionKey': input.production?.key,
               'productionSecret': input.production?.secret,
               'productionWebHook': input.production?.webHook,
+              'productionSecure': input.production?.isSecure,
               'developmentKey': input.development.key,
               'developmentSecret': input.development.secret,
               'developmentWebHook': input.development.webHook,
+              'developmentSecure': input.development.isSecure,
               'plan': input.subscriptionType.index,
               'groupLimitation': input.groupLimitation,
-              'secure': input.isSecure,
             },
           ),
         );

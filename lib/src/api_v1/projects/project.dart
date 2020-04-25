@@ -89,26 +89,30 @@ class ProjectService {
     }
     final accountData = await _rpcs.accountRpcs.getAccountById.request(tokenData.accountId);
     final projectData = await _rpcs.projectRpcs.getProjectByKey.request(projectKey);
-    if (projectData.id != accountData.projectId) {
+    if (projectData?.id != accountData.projectId) {
       return Response(HttpStatus.unauthorized);
     }
     final body = (json.decode(await request.readAsString()) as Map).cast<String, dynamic>();
     final updateProjectDataRequest = UpdateProjectDataRequest.fromJson(body);
-
     final isDevelopmentProject = projectKey == projectData.development.key;
-
-    final production = projectData.production?.copyWith(webHook: !isDevelopmentProject ? updateProjectDataRequest.webHook : projectData.production.webHook);
-    final development = projectData.development.copyWith(webHook: isDevelopmentProject ? updateProjectDataRequest.webHook : projectData.development.webHook);
+    final production = projectData.production?.copyWith(
+      webHook: !isDevelopmentProject ? updateProjectDataRequest.webHook : projectData.production.webHook,
+      isSecure: !isDevelopmentProject ? updateProjectDataRequest.isSecure : projectData.production.isSecure,
+    );
+    final development = projectData.development.copyWith(
+      webHook: isDevelopmentProject ? updateProjectDataRequest.webHook : projectData.development.webHook,
+      isSecure: isDevelopmentProject ? updateProjectDataRequest.isSecure : projectData.development.isSecure,
+    );
     final updatedProjectData = projectData.copyWith(
       production: production,
       development: development,
-      isSecure: updateProjectDataRequest.isSecure ?? projectData.isSecure,
     );
     await _rpcs.projectRpcs.updateProject.request(UpdateProjectParameters(
       projectData.id,
       updatedProjectData.production?.webHook,
       updatedProjectData.development.webHook,
-      updatedProjectData.isSecure,
+      updatedProjectData.production?.isSecure,
+      updatedProjectData.development.isSecure,
     ));
     return Response(HttpStatus.ok);
   }
