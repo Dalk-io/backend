@@ -41,28 +41,22 @@ class ProjectService {
       .addMiddleware(checkProjectExistMiddleware(_rpcs.projectRpcs.getProjectByKey))
       .addHandler((request) => webSocketHandler((WebSocketChannel webSocket) => onWebSocket(request, webSocket))(request))(request);
 
-  @Route.post('/<projectKey>')
+  @Route('PATCH', '/<projectKey>')
   Future<Response> updateProject(Request request) async {
     final projectKey = params(request, 'projectKey');
     final token = request.headers[HttpHeaders.authorizationHeader];
-    print('ici');
     if (token == null) {
       return Response(HttpStatus.badRequest);
     }
-    print('ici');
     final tokenData = await _rpcs.tokenRpcs.getToken.request(token);
     if (tokenData == null) {
       return Response(HttpStatus.unauthorized);
     }
-    print('ici');
     final accountData = await _rpcs.accountRpcs.getAccountById.request(tokenData.accountId);
     final projectData = await _rpcs.projectRpcs.getProjectByKey.request(projectKey);
-    print(accountData.projectId);
-    print(projectData.id);
     if (projectData.id != accountData.projectId) {
       return Response(HttpStatus.unauthorized);
     }
-    print('ici');
     final body = (json.decode(await request.readAsString()) as Map).cast<String, dynamic>();
     final updateProjectDataRequest = UpdateProjectDataRequest.fromJson(body);
     final production = projectData.production?.copyWith(webHook: updateProjectDataRequest.productionWebHook ?? projectData.production.webHook);
