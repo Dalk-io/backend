@@ -35,7 +35,7 @@ class GetConversationsForUser extends Endpoint<GetConversationsForUserParameters
         avatar: conversationData[2] as String,
         admins: admins,
         users: users,
-        messages: messagesData.map((messageData) => MessageData.fromDatabase(messageData)).toList(),
+        messages: messagesData.map((messageData) => MessageData.fromDatabase(messageData).copyWith(projectId: null, conversationId: null)).toList(),
         isGroup: conversationData[5] as bool,
       ));
     }

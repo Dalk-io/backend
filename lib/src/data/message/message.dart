@@ -9,9 +9,9 @@ part 'message.g.dart';
 abstract class MessageData with _$MessageData {
   @JsonSerializable(explicitToJson: true)
   const factory MessageData(
-    @nullable String id,
-    String projectId,
-    String conversationId,
+    String id,
+    @nullable @JsonKey(includeIfNull: false) String projectId,
+    @nullable @JsonKey(includeIfNull: false) String conversationId,
     String senderId,
     String text,
     DateTime timestamp,
