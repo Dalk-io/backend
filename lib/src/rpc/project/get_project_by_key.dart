@@ -16,10 +16,11 @@ class GetProjectByKey extends Endpoint<String, ProjectsData> {
       return null;
     }
     final result = results.first;
-    final groupLimitation = result.elementAt(7) as int;
-    final secure = result.elementAt(8) as bool;
-    final prod = ProjectEnvironment(result.elementAt(0) as String, result.elementAt(1) as String, webHook: result.elementAt(2) as String);
-    final dev = ProjectEnvironment(result.elementAt(3) as String, result.elementAt(4) as String, webHook: result.elementAt(5) as String);
-    return ProjectsData(dev, SubscriptionType.values[result.elementAt(6) as int], production: prod, groupLimitation: groupLimitation, isSecure: secure);
+    final id = result.elementAt(0) as int;
+    final groupLimitation = result.elementAt(8) as int;
+    final secure = result.elementAt(9) as bool;
+    final prod = ProjectEnvironment(result.elementAt(1) as String, result.elementAt(2) as String, webHook: result.elementAt(3) as String);
+    final dev = ProjectEnvironment(result.elementAt(4) as String, result.elementAt(5) as String, webHook: result.elementAt(6) as String);
+    return ProjectsData(dev, SubscriptionType.values[result.elementAt(7) as int], production: prod, groupLimitation: groupLimitation, isSecure: secure, id: id);
   }
 }

@@ -84,6 +84,7 @@ ToDatabase generateToDatabase(PgPool pgPool) => ToDatabase(
       SaveTokenToDatabase(pgPool),
       SaveUserToDatabase(pgPool),
       UpdateUserByIdFromDatabase(pgPool),
+      UpdateProjectToDatabase(pgPool),
     );
 
 MessageRpcs generateMessageRpcs(FromDatabase from, ToDatabase to) => MessageRpcs(
@@ -120,6 +121,7 @@ ProjectRpcs generateProjectRpcs(FromDatabase from, ToDatabase to) => ProjectRpcs
       GetProjectByKey(from.getProjectByKeyFromDatabase),
       SaveProject(to.saveProjectToDatabase),
       GetProjectById(from.getProjectByIdFromDatabase),
+      UpdateProject(to.updateProjectToDatabase),
     );
 
 AccountRpcs generateAccountRpcs(FromDatabase from, ToDatabase to) => AccountRpcs(

@@ -24,7 +24,7 @@ void main() {
   test('project doesn\'t exist', () async {
     final getProjectByKeyMock = GetProjectByKeyMock();
     when(getProjectByKeyMock.request(any)).thenAnswer((_) => null);
-    final rpcs = Rpcs(null, null, null, null, null, ProjectRpcs(getProjectByKeyMock, null, null), null, null, null);
+    final rpcs = Rpcs(null, null, null, null, null, ProjectRpcs(getProjectByKeyMock, null, null, null), null, null, null);
     final projectService = ProjectService(rpcs);
     final response = await projectService.project(Request('GET', Uri.parse('http://localhost/api/v1/projects/toto/ws'), context: {
       'shelf_router/params': {'id': 'toto'}
@@ -44,7 +44,7 @@ void main() {
       ConversationRpcsMock(),
       ConversationsRpcsMock(),
       null,
-      ProjectRpcs(getProjectByKeyMock, null, null),
+      ProjectRpcs(getProjectByKeyMock, null, null, null),
       null,
       null,
       UserRpcsMock(),

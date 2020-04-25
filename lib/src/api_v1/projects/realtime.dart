@@ -405,6 +405,7 @@ class Realtime {
     ];
     logger.fine('new states $newStates');
     message = await _updateMessageState.request(UpdateMessageStateParameters(projectKey, message.conversationId, messageId, newStates));
+    print(message);
     final conversation = await _getConversationById.request(GetConversationByIdParameters(projectKey, message.conversationId));
     final others = _connectedUsers.where((user) => conversation.users.contains(user.data)).where((user) => user.data.id != _user.data.id);
     final connectedOthers = [

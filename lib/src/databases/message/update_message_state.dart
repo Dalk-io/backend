@@ -9,7 +9,7 @@ class UpdateMessageStateToDatabase extends DatabaseEndpoint<UpdateMessageStatePa
       : super(
           pgPool,
           (input) => pgPool.query(
-            'UPDATE messages SET state = @state WHERE projectId = @projectId AND conversationId = @conversationId AND id = @id RETURNING projectId, id, conversationId, senderId, text, timestamp, state',
+            'UPDATE messages SET state = @state WHERE projectId = @projectId AND conversationId = @conversationId AND id = @id RETURNING id, projectId, conversationId, senderId, text, timestamp, state',
             substitutionValues: <String, dynamic>{
               'projectId': input.projectId,
               'conversationId': input.conversationId,

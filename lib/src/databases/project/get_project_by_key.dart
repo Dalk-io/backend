@@ -6,7 +6,7 @@ class GetProjectByKeyFromDatabase extends DatabaseEndpoint<String> {
       : super(
           pgPool,
           (input) => pgPool.query(
-            'SELECT productionKey, productionSecret, productionWebHook, developmentKey, developmentSecret, developmentWebHook, plan, groupLimitation, secure FROM projects WHERE productionKey = @key OR developmentKey = @key',
+            'SELECT id, productionKey, productionSecret, productionWebHook, developmentKey, developmentSecret, developmentWebHook, plan, groupLimitation, secure FROM projects WHERE productionKey = @key OR developmentKey = @key',
             substitutionValues: <String, dynamic>{
               'key': input,
             },

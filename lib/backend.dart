@@ -45,6 +45,8 @@ export 'src/databases/project/save_project.dart';
 export 'src/rpc/project/save_project.dart';
 export 'src/databases/project/get_project_by_id.dart';
 export 'src/rpc/project/get_project_by_id.dart';
+export 'src/databases/project/update_project.dart';
+export 'src/rpc/project/update_project.dart';
 export 'src/rpc/project/project.dart';
 
 //  contact

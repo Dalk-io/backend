@@ -5,6 +5,7 @@ class ProjectRpcs {
   final GetProjectByKey getProjectByKey;
   final SaveProject saveProject;
   final GetProjectById getProjectById;
+  final UpdateProject updateProject;
 
-  ProjectRpcs(this.getProjectByKey, this.saveProject, this.getProjectById);
+  ProjectRpcs(this.getProjectByKey, this.saveProject, this.getProjectById, this.updateProject);
 }
