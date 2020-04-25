@@ -289,7 +289,7 @@ class Realtime {
     if (to != -1 && messages.length >= to - from) {
       messages = messages.take(to - from).toList();
     }
-    final response = messages.map((message) => message.toJson()).toList(growable: false);
+    final response = messages.map(_messageToJson).toList(growable: false);
     logger.info('getMessages took ${sw.elapsed}');
     return response;
   }
