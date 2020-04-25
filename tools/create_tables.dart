@@ -36,6 +36,6 @@ void main() async {
   await pg.execute(
       'CREATE TABLE IF NOT EXISTS conversations (projectId TEXT NOT NULL, id TEXT NOT NULL, subject TEXT, avatar TEXT, admins json NOT NULL, users json NOT NULL, lastUpdate TIMESTAMPTZ NOT NULL, isGroup boolean NOT NULL);');
   await pg.execute(
-      'CREATE TABLE IF NOT EXISTS messages (projectId TEXT NOT NULL, id TEXT PRIMARY KEY, conversationId TEXT NOT NULL, senderId TEXT NOT NULL, text TEXT, timestamp TIMESTAMPTZ NOT NULL, state json NOT NULL);');
+      'CREATE TABLE IF NOT EXISTS messages (projectId TEXT NOT NULL, id TEXT PRIMARY KEY, conversationId TEXT NOT NULL, senderId TEXT NOT NULL, text TEXT, timestamp TIMESTAMPTZ NOT NULL, statusDetails json NOT NULL);');
   await pg.close();
 }

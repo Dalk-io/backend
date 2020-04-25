@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:backend/src/api_v1/account/account.dart';
 import 'package:backend/src/api_v1/auth/auth.dart';
-import 'package:backend/src/api_v1/conversations/conversation.dart';
 import 'package:backend/src/api_v1/projects/project.dart';
 import 'package:backend/src/rpc/contact/parameters.dart';
 import 'package:backend/src/rpc/rpcs.dart';
@@ -27,9 +26,6 @@ class ApiV1 {
 
   @Route.mount('/auth/')
   Router get _authService => AuthService(_rpcs.accountRpcs, _rpcs.projectRpcs, _rpcs.tokenRpcs).router;
-
-  @Route.mount('/conversations/')
-  Router get _conversations => ConversationService(_rpcs).router;
 
   @Route.mount('/accounts/')
   Router get _accounts => AccountService(_rpcs).router;

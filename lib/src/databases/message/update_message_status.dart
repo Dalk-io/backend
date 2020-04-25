@@ -4,19 +4,16 @@ import 'package:backend/src/databases/database_endpoint.dart';
 import 'package:backend/src/rpc/message/parameters.dart';
 import 'package:postgres_pool/postgres_pool.dart';
 
-class SaveMessageToDatabase extends DatabaseEndpoint<SaveMessageParameters> {
-  SaveMessageToDatabase(PgPool pgPool)
+class UpdateMessageStatusToDatabase extends DatabaseEndpoint<UpdateMessageStatusParameters> {
+  UpdateMessageStatusToDatabase(PgPool pgPool)
       : super(
           pgPool,
           (input) => pgPool.query(
-            'INSERT INTO messages (id, projectId, conversationId, senderId, text, timestamp, statusDetails) VALUES (@id, @projectId, @conversationId, @senderId, @text, @timestamp, @statusDetails);',
+            'UPDATE messages SET statusDetails = @statusDetails WHERE projectId = @projectId AND conversationId = @conversationId AND id = @id RETURNING id, projectId, conversationId, senderId, text, timestamp, statusDetails',
             substitutionValues: <String, dynamic>{
-              'id': input.id,
               'projectId': input.projectId,
               'conversationId': input.conversationId,
-              'senderId': input.senderId,
-              'text': input.text,
-              'timestamp': DateTime.now().toUtc(),
+              'id': input.messageId,
               'statusDetails': json.encode(input.statusDetails.map((statusByUser) => {'id': statusByUser.id, 'status': statusByUser.status.index}).toList()),
             },
           ),

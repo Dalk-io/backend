@@ -70,6 +70,7 @@ FromDatabase generateFromDatabase(PgPool pgPool) => FromDatabase(
       GetUserByIdFromDatabase(pgPool),
       DeleteTokenFromDatabase(pgPool),
       GetAccountByIdFromDatabase(pgPool),
+      GetConversationsForProjectFromDatabase(pgPool),
     );
 
 ToDatabase generateToDatabase(PgPool pgPool) => ToDatabase(
@@ -77,7 +78,7 @@ ToDatabase generateToDatabase(PgPool pgPool) => ToDatabase(
       SaveConversationToDatabase(pgPool),
       UpdateConversationLastUpdateToDatabase(pgPool),
       UpdateConversationSubjectAndAvatarToDatabase(pgPool),
-      UpdateMessageStateToDatabase(pgPool),
+      UpdateMessageStatusToDatabase(pgPool),
       SaveMessageToDatabase(pgPool),
       SaveAccountToDatabase(pgPool),
       SaveProjectToDatabase(pgPool),
@@ -90,7 +91,7 @@ ToDatabase generateToDatabase(PgPool pgPool) => ToDatabase(
 MessageRpcs generateMessageRpcs(FromDatabase from, ToDatabase to) => MessageRpcs(
       GetMessageById(from.getMessageByIdFromDatabase),
       SaveMessage(to.saveMessageToDatabase),
-      UpdateMessageState(to.updateMessageStateToDatabase),
+      UpdateMessageStatus(to.updateMessageStatusToDatabase),
     );
 
 MessagesRpcs generateMessagesRpcs(FromDatabase from, ToDatabase to) => MessagesRpcs(GetMessagesForConversation(from.getMessagesForConversationFromDatabase));
@@ -112,6 +113,11 @@ ConversationsRpcs generateConversationsRpcs(FromDatabase from, ToDatabase to) =>
         from.getConversationsForUserFromDatabase,
         from.getLastMessageForConversationFromDatabase,
         GetUserById(from.getUserByIdFromDatabase),
+      ),
+      GetConversationsForProject(
+        from.getConversationsForProjectFromDatabase,
+        GetUserById(from.getUserByIdFromDatabase),
+        from.getLastMessageForConversationFromDatabase,
       ),
     );
 

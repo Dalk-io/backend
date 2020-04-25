@@ -9,7 +9,7 @@ class GetMessagesForConversationFromDatabase extends DatabaseEndpoint<GetMessage
       : super(
             pgPool,
             (input) => pgPool.query(
-                  'SELECT id, projectId, conversationId, senderId, text, timestamp, state FROM messages WHERE projectId = @projectId AND conversationId = @conversationId ORDER BY timestamp ASC',
+                  'SELECT id, projectId, conversationId, senderId, text, timestamp, statusDetails FROM messages WHERE projectId = @projectId AND conversationId = @conversationId ORDER BY timestamp ASC',
                   substitutionValues: <String, String>{
                     'projectId': input.projectId,
                     'conversationId': input.conversationId,

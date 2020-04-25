@@ -8,6 +8,7 @@ import 'package:backend/src/api_v1/projects/realtime.dart';
 import 'package:backend/src/data/project/project.dart';
 import 'package:backend/src/middlewares/check_project_exist.dart';
 import 'package:backend/src/rpc/project/parameters.dart';
+import 'package:backend/src/utils/message_to_json.dart';
 import 'package:json_rpc_2/json_rpc_2.dart';
 import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
@@ -36,7 +37,7 @@ class ProjectService {
 
   Router get router => _$ProjectServiceRouter(this);
 
-  @Route.get('/<id>/ws')
+  @Route.get('/<projectKey>/ws')
   FutureOr<Response> project(Request request) => Pipeline()
       .addMiddleware(checkProjectExistMiddleware(_rpcs.projectRpcs.getProjectByKey))
       .addHandler((request) => webSocketHandler((WebSocketChannel webSocket) => onWebSocket(request, webSocket))(request))(request);
@@ -68,6 +69,44 @@ class ProjectService {
     return Response(HttpStatus.ok);
   }
 
+  @Route.get('/<projectKey>/conversations')
+  Future<Response> getConversations(Request request) async {
+    final token = request.headers[HttpHeaders.authorizationHeader];
+    if (token == null) {
+      return Response(HttpStatus.unauthorized);
+    }
+    final tokenData = await _rpcs.tokenRpcs.getToken.request(token);
+    if (tokenData == null) {
+      return Response(HttpStatus.unauthorized);
+    }
+    final accountData = await _rpcs.accountRpcs.getAccountById.request(tokenData.accountId);
+    final projectData = await _rpcs.projectRpcs.getProjectById.request(accountData.projectId);
+    final projectKey = params(request, 'projectKey');
+    if (![projectData.development.key, if (projectData.production?.key != null) projectData.production.key].contains(projectKey)) {
+      return Response.notFound('');
+    }
+    final conversationsData = await _rpcs.conversationsRpcs.getConversationsForProject.request(projectKey);
+    final jsonResponse = conversationsData.map((conversation) {
+      final conversationJson = conversation.toJson();
+      conversationJson['messages'] = [if (conversation.messages.isNotEmpty) messageToJson(conversation.messages.first, filter: false)];
+      return conversationJson;
+    }).toList(growable: false);
+    return Response(
+      HttpStatus.ok,
+      body: json.encode(jsonResponse),
+    );
+  }
+
+  @Route.get('/<projectKey>/conversations/<conversationId>')
+  Future<Response> getConversationById(Request request) async {
+    return Response(HttpStatus.notImplemented);
+  }
+
+  @Route.get('/<projectKey>/conversations/<conversationId>/messages/')
+  Future<Response> getMessages(Request request) async {
+    return Response(HttpStatus.notImplemented);
+  }
+
   Future<void> onWebSocket(Request request, WebSocketChannel webSocket) async {
     final logger = Logger('${_logger.name}.onWebSocket');
     final peer = peerFactory(webSocket);
@@ -84,7 +123,7 @@ class ProjectService {
         _rpcs.conversationsRpcs.getConversationsForUser,
         _rpcs.messageRpcs.saveMessage,
         _rpcs.messageRpcs.getMessageById,
-        _rpcs.messageRpcs.updateMessageState,
+        _rpcs.messageRpcs.updateMessageStatus,
         _rpcs.messagesRpcs.getMessagesForConversation,
         _rpcs.projectRpcs.getProjectByKey,
         _rpcs.userRpcs,

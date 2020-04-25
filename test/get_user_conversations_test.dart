@@ -35,7 +35,7 @@ void main() {
             false,
           ]
         ]);
-    when(getLastMessageForConversationFromDatabase.request(GetLastMessageForConversationParameters('toto', '1', '12345'))).thenAnswer((_) async => <List>[]);
+    when(getLastMessageForConversationFromDatabase.request(GetLastMessageForConversationParameters('toto', '1'))).thenAnswer((_) async => <List>[]);
     final getUserById = GetUserByIdMock();
     final getUserConversations = GetConversationsForUser(getUserConversationFromDatabase, getLastMessageForConversationFromDatabase, getUserById);
     final conversations = await getUserConversations.request(parameters);
@@ -60,7 +60,7 @@ void main() {
             false,
           ]
         ]);
-    when(getLastMessageForConversationFromDatabase.request(GetLastMessageForConversationParameters(projectId, '1', userId))).thenAnswer((_) async => <List>[
+    when(getLastMessageForConversationFromDatabase.request(GetLastMessageForConversationParameters(projectId, '1'))).thenAnswer((_) async => <List>[
           <dynamic>[
             '1',
             projectId,
@@ -69,8 +69,8 @@ void main() {
             'hello test',
             DateTime(2020, 01, 01),
             json.encode([
-              {'id': '2', 'state': MessageState.seen.index},
-              {'id': '2', 'state': MessageState.sent.index}
+              {'id': '2', 'status': MessageStatus.seen.index},
+              {'id': '2', 'status': MessageStatus.sent.index}
             ])
           ]
         ]);
@@ -82,6 +82,6 @@ void main() {
     expect(conversations.first.messages, isNotEmpty);
     expect(conversations.first.messages.length, 1);
     expect(conversations.first.messages.first.text, 'hello test');
-    expect(conversations.first.messages.first.states.first.state, MessageState.seen);
+    expect(conversations.first.messages.first.statusDetails.first.status, MessageStatus.seen);
   });
 }

@@ -18,10 +18,11 @@ import 'package:backend/src/rpc/conversations/parameters.dart';
 import 'package:backend/src/rpc/message/get_message_by_id.dart';
 import 'package:backend/src/rpc/message/parameters.dart';
 import 'package:backend/src/rpc/message/save_message.dart';
-import 'package:backend/src/rpc/message/update_message_state.dart';
+import 'package:backend/src/rpc/message/update_message_status.dart';
 import 'package:backend/src/rpc/messages/get_messages_for_conversation.dart';
 import 'package:backend/src/rpc/messages/parameters.dart';
 import 'package:backend/src/rpc/user/parameters.dart';
+import 'package:backend/src/utils/message_to_json.dart';
 import 'package:crypto/crypto.dart';
 import 'package:http/io_client.dart';
 import 'package:json_rpc_2/json_rpc_2.dart';
@@ -51,7 +52,7 @@ class Realtime {
   final GetNumberOfMessageForConversation _getNumberOfMessageForConversation;
   final SaveMessage _saveMessage;
   final GetMessageById _getMessageById;
-  final UpdateMessageState _updateMessageState;
+  final UpdateMessageStatus _updateMessageStatus;
   final GetProjectByKey _getProjectByKey;
   final UserRpcs _userRpcs;
 
@@ -73,7 +74,7 @@ class Realtime {
     this._getConversationsForUser,
     this._saveMessage,
     this._getMessageById,
-    this._updateMessageState,
+    this._updateMessageStatus,
     this._getMessagesForConversation,
     this._getProjectByKey,
     this._userRpcs, {
@@ -112,7 +113,7 @@ class Realtime {
 
     peer.registerMethod('sendMessage', (Parameters parameters) => sendMessage(parameters, peer));
 
-    peer.registerMethod('updateMessageState', (Parameters parameters) => updateMessageState(parameters, peer));
+    peer.registerMethod('updateMessageStatus', (Parameters parameters) => updateMessageStatus(parameters, peer));
 
     peer.registerFallback((parameters) => throw RpcException.methodNotFound(parameters.method));
   }
@@ -189,7 +190,7 @@ class Realtime {
     final userConversations = await _getConversationsForUser.request(GetConversationsForUserParameters(projectKey, _user.data.id));
     final response = userConversations.map((conversation) {
       final conversationJson = conversation.toJson();
-      conversationJson['messages'] = [if (conversation.messages.isNotEmpty) _messageToJson(conversation.messages.first)];
+      conversationJson['messages'] = [if (conversation.messages.isNotEmpty) messageToJson(conversation.messages.first)];
       return conversationJson;
     }).toList(growable: false);
     logger.info('getConversations took ${sw.elapsed}');
@@ -293,7 +294,7 @@ class Realtime {
     if (to != -1 && messages.length >= to - from) {
       messages = messages.take(to - from).toList();
     }
-    final response = messages.map(_messageToJson).toList(growable: false);
+    final response = messages.map(messageToJson).toList(growable: false);
     logger.info('getMessages took ${sw.elapsed}');
     return response;
   }
@@ -335,14 +336,14 @@ class Realtime {
       throw RpcException(HttpStatus.unauthorized, 'Not authorized');
     }
     final others = conversation.users.where((user) => user.id != _user.data.id);
-    final messageState = <MessageStateByUserData>[
-      MessageStateByUserData(_user.data.id, MessageState.seen),
-      ...others.map((value) => MessageStateByUserData(value.id, MessageState.sent)),
+    final messageStatus = <MessageStatusByUserData>[
+      MessageStatusByUserData(_user.data.id, MessageStatus.seen),
+      ...others.map((value) => MessageStatusByUserData(value.id, MessageStatus.sent)),
     ];
     final numberOfMessage = await _getNumberOfMessageForConversation.request(GetNumberOfMessageForConversationParameter(projectKey, conversationId));
     final id = _messageIdFactory();
-    await _saveMessage.request(SaveMessageParameters(id, projectKey, conversationId, _user.data.id, text, messageState));
-    final message = MessageData(id, projectKey, conversationId, _user.data.id, text, _dateTimeFactory(), messageState);
+    await _saveMessage.request(SaveMessageParameters(id, projectKey, conversationId, _user.data.id, text, messageStatus));
+    final message = MessageData(id, projectKey, conversationId, _user.data.id, text, _dateTimeFactory(), messageStatus);
     logger.fine('send message $message');
     final connectedOthers = [
       ..._connectedUsers.where((element) => others.contains(element.data)),
@@ -358,7 +359,7 @@ class Realtime {
       }
       createConversation = true;
     }
-    final messageJson = _messageToJson(message);
+    final messageJson = messageToJson(message);
     if (!createConversation) {
       for (final other in connectedOthers) {
         logger.fine('send message to user ${other.data.id}');
@@ -381,34 +382,34 @@ class Realtime {
     return messageJson;
   }
 
-  Future<void> updateMessageState(Parameters parameters, Peer peer) async {
+  Future<void> updateMessageStatus(Parameters parameters, Peer peer) async {
     final sw = Stopwatch()..start();
-    final logger = Logger('${_logger.name}.updateMessageState');
+    final logger = Logger('${_logger.name}.updateMessageStatus');
     final messageId = parameters['id'].asString;
-    final stateData = messageStateFromString(parameters['state'].asString);
-    logger.fine('update message state parameters $messageId $stateData');
+    final statusData = messageStatusFromString(parameters['status'].asString);
+    logger.fine('update message status parameters $messageId $statusData');
     var message = await _getMessageById.request(GetMessageByIdParameters(projectKey, messageId));
     if (message == null) {
       logger.warning('Message $messageId not found');
-      logger.info('updateMessageState took ${sw.elapsed}');
+      logger.info('updateMessageStatus took ${sw.elapsed}');
       throw RpcException(HttpStatus.notFound, 'Message not found', data: {'id': messageId});
     }
     final _user = _connectedUsers.firstWhere((element) => element.peer == peer, orElse: () => null);
-    if (_user == null || !message.states.map((state) => state.id).contains(_user.data.id)) {
+    if (_user == null || !message.statusDetails.map((status) => status.id).contains(_user.data.id)) {
       throw RpcException(HttpStatus.unauthorized, 'Not authorized');
     }
-    final oldUserMessageState = message.states.firstWhere((state) => state.id == _user.data.id, orElse: () => null);
-    if (oldUserMessageState.state.index >= stateData.index) {
-      logger.warning('same state, nothing to do');
+    final oldUserMessageStatus = message.statusDetails.firstWhere((status) => status.id == _user.data.id, orElse: () => null);
+    if (oldUserMessageStatus.status.index >= statusData.index) {
+      logger.warning('same status, nothing to do');
       return;
     }
-    final userMessageState = MessageStateByUserData(_user.data.id, stateData);
-    final newStates = <MessageStateByUserData>[
-      ...message.states.where((state) => state.id != _user.data.id),
-      userMessageState,
+    final userMessageStatus = MessageStatusByUserData(_user.data.id, statusData);
+    final newStatusDetails = <MessageStatusByUserData>[
+      ...message.statusDetails.where((status) => status.id != _user.data.id),
+      userMessageStatus,
     ];
-    logger.fine('new states $newStates');
-    message = await _updateMessageState.request(UpdateMessageStateParameters(projectKey, message.conversationId, messageId, newStates));
+    logger.fine('new status $newStatusDetails');
+    message = await _updateMessageStatus.request(UpdateMessageStatusParameters(projectKey, message.conversationId, messageId, newStatusDetails));
     print(message);
     final conversation = await _getConversationById.request(GetConversationByIdParameters(projectKey, message.conversationId));
     final others = _connectedUsers.where((user) => conversation.users.contains(user.data)).where((user) => user.data.id != _user.data.id);
@@ -417,19 +418,9 @@ class Realtime {
       ..._connectedUsers.where((element) => element.data.id == _user.data.id).where((element) => element.peer != _user.peer),
     ];
     for (final other in connectedOthers) {
-      logger.info('update message state $message');
-      other.updateMessageState(message.conversationId, _messageToJson(message));
+      logger.info('update message status $message');
+      other.updateMessageStatus(message.conversationId, messageToJson(message));
     }
-    logger.info('updateMessageState took ${sw.elapsed}');
-  }
-
-  Map<String, dynamic> _messageToJson(MessageData message) {
-    return <String, dynamic>{
-      ...message.toJson(),
-      'state': computeMessageState(message),
-      'states': computeMessageStates(message),
-    }
-      ..remove('projectId')
-      ..remove('conversationId');
+    logger.info('updateMessageStatus took ${sw.elapsed}');
   }
 }

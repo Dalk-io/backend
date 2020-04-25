@@ -42,7 +42,7 @@ Realtime initRealtime(String projectKey, {bool withWebHook = false}) {
   final getConversationsForUser = GetConversationsForUserMock();
   final saveMessage = SaveMessageMock();
   final getMessageById = GetMessageByIdMock();
-  final updateMessageState = UpdateMessageStateMock();
+  final updateMessageStatus = UpdateMessageStatusMock();
   final getMessagesForConversation = GetMessagesForConversationMock();
   final getProjectByKey = GetProjectByKeyMock();
 
@@ -127,7 +127,7 @@ Realtime initRealtime(String projectKey, {bool withWebHook = false}) {
   //     .thenAnswer((_) async => 1);
 
   when(getMessageById.request(GetMessageByIdParameters(testProjectId, '1'))).thenAnswer((_) async => MessageData('1', testProjectId, '1', '1', 'Hello world',
-      DateTime.utc(2020, 01, 01, 14, 30), [MessageStateByUserData('1', MessageState.seen), MessageStateByUserData('2', MessageState.sent)]));
+      DateTime.utc(2020, 01, 01, 14, 30), [MessageStatusByUserData('1', MessageStatus.seen), MessageStatusByUserData('2', MessageStatus.sent)]));
 
   when(getMessageById.request(GetMessageByIdParameters(testProjectId, '2'))).thenAnswer(
     (_) async => MessageData(
@@ -138,13 +138,13 @@ Realtime initRealtime(String projectKey, {bool withWebHook = false}) {
       'Hello world',
       DateTime.utc(2020, 01, 01, 14, 30),
       [
-        MessageStateByUserData('1', MessageState.seen),
-        MessageStateByUserData('2', MessageState.sent),
+        MessageStatusByUserData('1', MessageStatus.seen),
+        MessageStatusByUserData('2', MessageStatus.sent),
       ],
     ),
   );
-  when(updateMessageState.request(UpdateMessageStateParameters(
-      testProjectId, '17', '2', [MessageStateByUserData('1', MessageState.seen), MessageStateByUserData('2', MessageState.seen)]))).thenAnswer(
+  when(updateMessageStatus.request(UpdateMessageStatusParameters(
+      testProjectId, '17', '2', [MessageStatusByUserData('1', MessageStatus.seen), MessageStatusByUserData('2', MessageStatus.seen)]))).thenAnswer(
     (_) async => MessageData(
       '2',
       testProjectId,
@@ -153,18 +153,18 @@ Realtime initRealtime(String projectKey, {bool withWebHook = false}) {
       'Hello world',
       DateTime.utc(2020, 01, 01, 14, 30),
       [
-        MessageStateByUserData('1', MessageState.seen),
-        MessageStateByUserData('2', MessageState.seen),
+        MessageStatusByUserData('1', MessageStatus.seen),
+        MessageStatusByUserData('2', MessageStatus.seen),
       ],
     ),
   );
 
   when(getMessageById.request(GetMessageByIdParameters(testProjectId, '3'))).thenAnswer((_) async => MessageData('3', testProjectId, '17', '1', 'Hello world',
-      DateTime.utc(2020, 01, 01, 14, 30), [MessageStateByUserData('1', MessageState.seen), MessageStateByUserData('2', MessageState.seen)]));
-  when(updateMessageState.request(UpdateMessageStateParameters(
-          testProjectId, '17', '3', [MessageStateByUserData('1', MessageState.seen), MessageStateByUserData('2', MessageState.seen)])))
+      DateTime.utc(2020, 01, 01, 14, 30), [MessageStatusByUserData('1', MessageStatus.seen), MessageStatusByUserData('2', MessageStatus.seen)]));
+  when(updateMessageStatus.request(UpdateMessageStatusParameters(
+          testProjectId, '17', '3', [MessageStatusByUserData('1', MessageStatus.seen), MessageStatusByUserData('2', MessageStatus.seen)])))
       .thenAnswer((_) async => MessageData('3', testProjectId, '17', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30),
-          [MessageStateByUserData('1', MessageState.seen), MessageStateByUserData('2', MessageState.seen)]));
+          [MessageStatusByUserData('1', MessageStatus.seen), MessageStatusByUserData('2', MessageStatus.seen)]));
 
   return Realtime(
     testProjectId,
@@ -176,7 +176,7 @@ Realtime initRealtime(String projectKey, {bool withWebHook = false}) {
     getConversationsForUser,
     saveMessage,
     getMessageById,
-    updateMessageState,
+    updateMessageStatus,
     getMessagesForConversation,
     getProjectByKey,
     userRpcs,

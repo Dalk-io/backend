@@ -438,10 +438,10 @@ void main() {
             'senderId': '1',
             'text': 'Hello world',
             'timestamp': '2020-01-01T14:30:00.000Z',
-            'states': [
-              {'id': '2', 'state': 'sent'},
+            'statusDetails': [
+              {'id': '2', 'status': 'sent'},
             ],
-            'state': 'sent',
+            'status': 'sent',
           }),
           isTrue,
         );
@@ -464,9 +464,9 @@ void main() {
             'senderId': '1',
             'text': 'Hello world',
             'timestamp': '2020-01-01T14:30:00.000Z',
-            'state': 'sent',
-            'states': [
-              {'id': '2', 'state': 'sent'},
+            'status': 'sent',
+            'statusDetails': [
+              {'id': '2', 'status': 'sent'},
             ]
           }),
           isTrue,
@@ -490,9 +490,9 @@ void main() {
           'senderId': '1',
           'text': 'Hello world',
           'timestamp': '2020-01-01T14:30:00.000Z',
-          'state': 'sent',
-          'states': [
-            {'id': '2', 'state': 'sent'},
+          'status': 'sent',
+          'statusDetails': [
+            {'id': '2', 'status': 'sent'},
           ]
         }),
         isTrue,
@@ -519,10 +519,10 @@ void main() {
           'senderId': '1',
           'text': 'Hello world',
           'timestamp': '2020-01-01T14:30:00.000Z',
-          'state': 'sent',
-          'states': [
-            {'id': '2', 'state': 'sent'},
-            {'id': '3', 'state': 'sent'}
+          'status': 'sent',
+          'statusDetails': [
+            {'id': '2', 'status': 'sent'},
+            {'id': '3', 'status': 'sent'}
           ]
         }),
         isTrue,
@@ -547,9 +547,9 @@ void main() {
           'senderId': '1',
           'text': 'Hello world',
           'timestamp': '2020-01-01T14:30:00.000Z',
-          'state': 'sent',
-          'states': [
-            {'id': '2', 'state': 'sent'},
+          'status': 'sent',
+          'statusDetails': [
+            {'id': '2', 'status': 'sent'},
           ]
         }),
         isTrue,
@@ -557,13 +557,13 @@ void main() {
     });
   });
 
-  group('update message state', () {
+  group('update message status', () {
     test('message not found', () async {
       final peer = PeerMock();
       realtime.addPeer(peer);
       await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
       try {
-        await realtime.updateMessageState(Parameters('updateMessageState', {'id': '1', 'state': messageStateToString(MessageState.sent)}), peer);
+        await realtime.updateMessageStatus(Parameters('updateMessageStatus', {'id': '1', 'status': messageStatusToString(MessageStatus.sent)}), peer);
       } on RpcException catch (e) {
         expect(e.code, HttpStatus.notFound);
       }
@@ -573,7 +573,7 @@ void main() {
       final peer = PeerMock();
       realtime.addPeer(peer);
       await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
-      await realtime.updateMessageState(Parameters('updateMessageState', {'id': '1', 'state': messageStateToString(MessageState.sent)}), peer);
+      await realtime.updateMessageStatus(Parameters('updateMessageStatus', {'id': '1', 'status': messageStatusToString(MessageStatus.sent)}), peer);
       verifyNever(peer.sendRequest(any));
     });
 
@@ -584,16 +584,16 @@ void main() {
       final other = PeerMock();
       realtime.addPeer(other);
       await realtime.registerUser(Parameters('registerUser', {'id': '2'}), other);
-      await realtime.updateMessageState(
-          Parameters('updateMessageState', <String, dynamic>{'id': '2', 'state': messageStateToString(MessageState.seen)}), other);
-      verify(peer.sendRequest('updateMessageState17', {
+      await realtime.updateMessageStatus(
+          Parameters('updateMessageStatus', <String, dynamic>{'id': '2', 'status': messageStatusToString(MessageStatus.seen)}), other);
+      verify(peer.sendRequest('updateMessageStatus17', {
         'id': '2',
         'senderId': '1',
         'text': 'Hello world',
         'timestamp': '2020-01-01T14:30:00.000Z',
-        'state': 'seen',
-        'states': [
-          {'id': '2', 'state': 'seen'}
+        'status': 'seen',
+        'statusDetails': [
+          {'id': '2', 'status': 'seen'}
         ]
       })).called(1);
     });
@@ -608,9 +608,9 @@ void main() {
       final other1 = PeerMock();
       realtime.addPeer(other1);
       await realtime.registerUser(Parameters('registerUser', {'id': '3'}), other1);
-      await realtime.updateMessageState(
-          Parameters('updateMessageState', <String, dynamic>{'id': '2', 'state': messageStateToString(MessageState.seen)}), other);
-      verifyNever(other1.sendRequest('updateMessageState17', any));
+      await realtime.updateMessageStatus(
+          Parameters('updateMessageStatus', <String, dynamic>{'id': '2', 'status': messageStatusToString(MessageStatus.seen)}), other);
+      verifyNever(other1.sendRequest('updateMessageStatus17', any));
     });
 
     test('seen to seen', () async {
@@ -620,8 +620,8 @@ void main() {
       final other = PeerMock();
       realtime.addPeer(other);
       await realtime.registerUser(Parameters('registerUser', {'id': '2'}), other);
-      await realtime.updateMessageState(Parameters('updateMessageState', {'id': '3', 'state': messageStateToString(MessageState.seen)}), other);
-      verifyNever(peer.sendRequest('updateMessageState17', any));
+      await realtime.updateMessageStatus(Parameters('updateMessageStatus', {'id': '3', 'status': messageStatusToString(MessageStatus.seen)}), other);
+      verifyNever(peer.sendRequest('updateMessageStatus17', any));
     });
   });
 }

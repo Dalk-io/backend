@@ -11,17 +11,19 @@ export 'src/rpc/messages/messages.dart';
 
 //  message
 export 'src/databases/message/get_message_by_id.dart';
-export 'src/databases/message/save_message.dart';
-export 'src/databases/message/update_message_state.dart';
-export 'src/databases/message/get_last_message_for_conversation.dart';
 export 'src/rpc/message/get_message_by_id.dart';
+export 'src/databases/message/save_message.dart';
 export 'src/rpc/message/save_message.dart';
-export 'src/rpc/message/update_message_state.dart';
+export 'src/databases/message/update_message_status.dart';
+export 'src/rpc/message/update_message_status.dart';
+export 'src/databases/message/get_last_message_for_conversation.dart';
 export 'src/rpc/message/message.dart';
 
 //  conversations
 export 'src/databases/conversations/get_conversations_for_user.dart';
 export 'src/rpc/conversations/get_conversations_for_user.dart';
+export 'src/databases/conversations/get_conversations_for_project.dart';
+export 'src/rpc/conversations/get_conversations_for_project.dart';
 export 'src/rpc/conversations/conversations.dart';
 
 //  conversation

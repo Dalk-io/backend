@@ -15,16 +15,16 @@ abstract class MessageData with _$MessageData {
     String senderId,
     String text,
     DateTime timestamp,
-    List<MessageStateByUserData> states,
+    List<MessageStatusByUserData> statusDetails,
   ) = _MessageData;
 
   factory MessageData.fromJson(Map<String, dynamic> json) => _$MessageDataFromJson(json);
 
   factory MessageData.fromDatabase(List<dynamic> data) {
-    final states = (json.decode(data[6] as String) as List)
+    final statusDetails = (json.decode(data[6] as String) as List)
         .cast<Map>()
         .cast<Map<String, dynamic>>()
-        .map((state) => MessageStateByUserData(state['id'] as String, MessageState.values[state['state'] as int]))
+        .map((status) => MessageStatusByUserData(status['id'] as String, MessageStatus.values[status['status'] as int]))
         .toList();
     return MessageData(
       data[0] as String,
@@ -33,30 +33,31 @@ abstract class MessageData with _$MessageData {
       data[3] as String,
       data[4] as String,
       data[5] as DateTime,
-      states,
+      statusDetails,
     );
   }
 }
 
-String computeMessageState(MessageData message) => messageStateToString(MessageState.values[
-    message.states.where((state) => state.id != message.senderId).fold<int>(0, (value, state) => (value < state.state.index) ? state.state.index : value)]);
+String computeMessageStatus(MessageData message, {bool filter = true}) => messageStatusToString(MessageStatus.values[message.statusDetails
+    .where((status) => !filter || status.id != message.senderId)
+    .fold<int>(0, (value, status) => (value < status.status.index) ? status.status.index : value)]);
 
-List<Map<String, dynamic>> computeMessageStates(MessageData message) =>
-    message.states.where((state) => state.id != message.senderId).map((state) => state.toJson()).toList();
+List<Map<String, dynamic>> computeMessageStatusDetails(MessageData message) =>
+    message.statusDetails.where((status) => status.id != message.senderId).map((status) => status.toJson()).toList();
 
-enum MessageState {
+enum MessageStatus {
   sent,
   received,
   seen,
 }
 
-MessageState messageStateFromString(String state) => _$enumDecodeNullable(_$MessageStateEnumMap, state);
-String messageStateToString(MessageState state) => _$MessageStateEnumMap[state];
+MessageStatus messageStatusFromString(String status) => _$enumDecodeNullable(_$MessageStatusEnumMap, status);
+String messageStatusToString(MessageStatus status) => _$MessageStatusEnumMap[status];
 
 @freezed
-abstract class MessageStateByUserData with _$MessageStateByUserData {
+abstract class MessageStatusByUserData with _$MessageStatusByUserData {
   @JsonSerializable(explicitToJson: true)
-  const factory MessageStateByUserData(String id, MessageState state) = _MessageStateByUserData;
+  const factory MessageStatusByUserData(String id, MessageStatus status) = _MessageStatusByUserData;
 
-  factory MessageStateByUserData.fromJson(Map<String, dynamic> json) => _$MessageStateByUserDataFromJson(json);
+  factory MessageStatusByUserData.fromJson(Map<String, dynamic> json) => _$MessageStatusByUserDataFromJson(json);
 }

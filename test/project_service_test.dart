@@ -27,7 +27,7 @@ void main() {
     final rpcs = Rpcs(null, null, null, null, null, ProjectRpcs(getProjectByKeyMock, null, null, null), null, null, null);
     final projectService = ProjectService(rpcs);
     final response = await projectService.project(Request('GET', Uri.parse('http://localhost/api/v1/projects/toto/ws'), context: {
-      'shelf_router/params': {'id': 'toto'}
+      'shelf_router/params': {'projectKey': 'toto'}
     }));
     expect(response.statusCode, HttpStatus.notFound);
     final body = json.decode(await response.readAsString()) as Map<String, dynamic>;

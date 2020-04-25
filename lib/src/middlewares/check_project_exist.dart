@@ -8,17 +8,17 @@ import 'package:shelf_router/shelf_router.dart';
 Middleware checkProjectExistMiddleware(GetProjectByKey getProjectByKey) => (Handler handler) {
       final logger = Logger('checkProjectExistMiddleware');
       return (request) async {
-        final projectId = params(request, 'id');
-        final project = await getProjectByKey.request(projectId);
+        final projectKey = params(request, 'projectKey');
+        final project = await getProjectByKey.request(projectKey);
         if (project == null) {
-          logger.warning('Project $projectId not found');
-          return Response.notFound(json.encode({'message': 'Project $projectId not found'}));
+          logger.warning('Project $projectKey not found');
+          return Response.notFound(json.encode({'message': 'Project $projectKey not found'}));
         }
         return handler(
           request.change(
             context: {
               ...request.context,
-              'projectEnvironment': projectId == project.development.key ? project.development : project.production,
+              'projectEnvironment': projectKey == project.development.key ? project.development : project.production,
             },
           ),
         );

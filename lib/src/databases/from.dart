@@ -1,6 +1,7 @@
 import 'package:backend/backend.dart';
 import 'package:backend/src/databases/conversation/get_conversation_by_id.dart';
 import 'package:backend/src/databases/conversation/get_number_of_message_for_conversation.dart';
+import 'package:backend/src/databases/conversations/get_conversations_for_project.dart';
 import 'package:backend/src/databases/conversations/get_conversations_for_user.dart';
 import 'package:backend/src/databases/message/get_last_message_for_conversation.dart';
 import 'package:backend/src/databases/message/get_message_by_id.dart';
@@ -13,6 +14,7 @@ class FromDatabase {
   final GetNumberOfMessageForConversationFromDatabase getNumberOfMessageForConversationFromDatabase;
 
   final GetConversationsForUserFromDatabase getConversationsForUserFromDatabase;
+  final GetConversationsForProjectFromDatabase getConversationsForProjectFromDatabase;
 
   final GetLastMessageForConversationFromDatabase getLastMessageForConversationFromDatabase;
   final GetMessageByIdFromDatabase getMessageByIdFromDatabase;
@@ -45,5 +47,6 @@ class FromDatabase {
     this.getUserByIdFromDatabase,
     this.deleteTokenFromDatabase,
     this.getAccountById,
+    this.getConversationsForProjectFromDatabase,
   );
 }
