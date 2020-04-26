@@ -130,7 +130,7 @@ class AuthService {
         })))
         .toString();
     final developmentSecret = 'dev_$developmentSecretHash';
-    final project = ProjectsData(ProjectEnvironment(developmentKey, developmentSecret), SubscriptionType.starter);
+    final project = ProjectsData(ProjectEnvironmentData(developmentKey, developmentSecret), SubscriptionType.starter);
     final projectId = await _projectRpcs.saveProject.request(project);
     final accountId = await _accountRpcs.saveAccount.request(SaveAccountParameters(firstName, lastName, email, encryptedPassword, projectId));
     await _tokenRpcs.saveToken.request(SaveTokenParameters(token, accountId, DateTime.now().toUtc()));

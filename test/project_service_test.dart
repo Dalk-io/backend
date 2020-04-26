@@ -56,7 +56,7 @@ void main() {
       return peer;
     });
     final request = Request('GET', Uri.parse('http://localhost/api/v1/projects/fake_project_id/ws'), context: {
-      'projectEnvironment': ProjectEnvironment('fake_project_id', 'mySuperSecret'),
+      'projectEnvironment': ProjectEnvironmentData('fake_project_id', 'mySuperSecret'),
     });
     final webSocket = WebSocketChannelMock();
     final _loggedMessages = <String>[];

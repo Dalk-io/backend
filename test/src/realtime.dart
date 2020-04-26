@@ -27,6 +27,7 @@ import 'mocks/rpc/user/get_user_by_id.dart';
 import 'mocks/rpc/user/save_user.dart';
 import 'mocks/rpc/user/update_user.dart';
 
+@deprecated
 Realtime initRealtime(String projectKey, {bool withWebHook = false}) {
   //  rpcs
   final getUserById = GetUserByIdMock();
@@ -55,7 +56,7 @@ Realtime initRealtime(String projectKey, {bool withWebHook = false}) {
   when(getUserById.request(GetUserByIdParameters(testProjectId, '10'))).thenAnswer((_) async => UserData('10'));
 
   when(getProjectByKey.request(testProjectId)).thenAnswer(
-      (_) async => ProjectsData(ProjectEnvironment(testProjectId, testProjectSecret, webHook: withWebHook ? 'tet' : null), SubscriptionType.starter));
+      (_) async => ProjectsData(ProjectEnvironmentData(testProjectId, testProjectSecret, webHook: withWebHook ? 'tet' : null), SubscriptionType.starter));
 
   when(getConversationsForUser.request(GetConversationsForUserParameters(testProjectId, '1'))).thenAnswer((_) async => <ConversationData>[
         ConversationData(id: '1', admins: [UserData('1')], users: [UserData('1'), UserData('2')]),

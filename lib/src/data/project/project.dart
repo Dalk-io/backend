@@ -4,16 +4,16 @@ part 'project.freezed.dart';
 part 'project.g.dart';
 
 @freezed
-abstract class ProjectEnvironment with _$ProjectEnvironment {
+abstract class ProjectEnvironmentData with _$ProjectEnvironmentData {
   @JsonSerializable(explicitToJson: true)
-  const factory ProjectEnvironment(
+  const factory ProjectEnvironmentData(
     @JsonKey(includeIfNull: false) String key,
     @JsonKey(includeIfNull: false) String secret, {
     @nullable @JsonKey(includeIfNull: false) String webHook,
     @Default(false) bool isSecure,
-  }) = _ProjectEnvironment;
+  }) = _ProjectEnvironmentData;
 
-  factory ProjectEnvironment.fromJson(Map<String, dynamic> json) => _$ProjectEnvironmentFromJson(json);
+  factory ProjectEnvironmentData.fromJson(Map<String, dynamic> json) => _$ProjectEnvironmentDataFromJson(json);
 }
 
 enum SubscriptionType {
@@ -25,10 +25,10 @@ enum SubscriptionType {
 abstract class ProjectsData with _$ProjectsData {
   @JsonSerializable(explicitToJson: true)
   const factory ProjectsData(
-    ProjectEnvironment development,
+    ProjectEnvironmentData development,
     SubscriptionType subscriptionType, {
     @nullable @JsonKey(includeIfNull: false) int id,
-    @nullable @JsonKey(includeIfNull: false) ProjectEnvironment production,
+    @nullable @JsonKey(includeIfNull: false) ProjectEnvironmentData production,
     @Default(5) int groupLimitation,
   }) = _ProjectsData;
 

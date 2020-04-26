@@ -48,7 +48,7 @@ class ProjectService {
   Future<void> onWebSocket(Request request, WebSocketChannel webSocket) async {
     final logger = Logger('${_logger.name}.onWebSocket');
     final peer = peerFactory(webSocket);
-    final projectData = request.context['projectEnvironment'] as ProjectEnvironment;
+    final projectData = request.context['projectEnvironment'] as ProjectEnvironmentData;
     _realtime.putIfAbsent(
       projectData.key,
       () => Realtime(
