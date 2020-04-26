@@ -17,8 +17,11 @@ class Backend {
   Backend(this._rpcs);
 
   Handler get handler => Pipeline()
-      .addMiddleware(
-          dalkCorsMiddleware({'Access-Control-Allow-Origin': '*', 'Access-Control-Request-Method': 'POST', 'Access-Control-Allow-Headers': 'Content-Type'}))
+      .addMiddleware(dalkCorsMiddleware({
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Request-Method': 'GET, POST, PATCH, PUT, DELETE',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      }))
       .addHandler(_$BackendRouter(this).handler);
 
   @Route.mount('/v1/')
