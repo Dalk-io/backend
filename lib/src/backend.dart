@@ -20,7 +20,7 @@ class Backend {
       .addMiddleware(dalkCorsMiddleware({
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Request-Method': 'GET, POST, PATCH, PUT, DELETE',
-        'Access-Control-Allow-Headers': 'Content-Type'
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
       }))
       .addHandler(_$BackendRouter(this).handler);
 
