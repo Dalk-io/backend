@@ -1,3 +1,5 @@
+name: Deploy to production
+
 on:
   push:
     tags:
