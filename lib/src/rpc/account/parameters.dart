@@ -11,3 +11,8 @@ abstract class SaveAccountParameters with _$SaveAccountParameters {
 abstract class GetAccountByEmailAndPasswordParameters with _$GetAccountByEmailAndPasswordParameters {
   const factory GetAccountByEmailAndPasswordParameters(String email, String password) = _GetAccountByEmailAndPasswordParameters;
 }
+
+@freezed
+abstract class UpdateAccountParameters with _$UpdateAccountParameters {
+  const factory UpdateAccountParameters(int id, String password) = _UpdateAccountParameters;
+}

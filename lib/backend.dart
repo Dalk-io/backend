@@ -65,6 +65,8 @@ export 'src/databases/account/get_account_by_email_and_password.dart';
 export 'src/rpc/account/get_account_by_email_and_password.dart';
 export 'src/databases/account/get_account_by_id.dart';
 export 'src/rpc/account/get_account_by_id.dart';
+export 'src/databases/account/update_account.dart';
+export 'src/rpc/account/update_account.dart';
 export 'src/rpc/account/account.dart';
 
 //  token

@@ -10,6 +10,7 @@ import 'package:backend/src/rpc/conversation/parameters.dart';
 import 'package:backend/src/rpc/messages/parameters.dart';
 import 'package:backend/src/rpc/project/parameters.dart';
 import 'package:backend/src/rpc/rpcs.dart';
+import 'package:backend/src/utils/check_token.dart';
 import 'package:backend/src/utils/message_to_json.dart';
 import 'package:json_rpc_2/json_rpc_2.dart';
 import 'package:logging/logging.dart';
@@ -82,11 +83,7 @@ class ProjectService {
   @Route('PATCH', '/<projectKey>/')
   Future<Response> updateProject(Request request) async {
     final projectKey = params(request, 'projectKey');
-    final token = request.headers[HttpHeaders.authorizationHeader];
-    if (token == null) {
-      return Response(HttpStatus.badRequest);
-    }
-    final tokenData = await _rpcs.tokenRpcs.getToken.request(token);
+    final tokenData = await getTokenData(request, _rpcs);
     if (tokenData == null) {
       return Response(HttpStatus.unauthorized);
     }
@@ -125,11 +122,7 @@ class ProjectService {
   @Route.get('/<projectKey>/conversations')
   @Route.get('/<projectKey>/conversations/')
   Future<Response> getConversations(Request request) async {
-    final token = request.headers[HttpHeaders.authorizationHeader];
-    if (token == null) {
-      return Response(HttpStatus.unauthorized);
-    }
-    final tokenData = await _rpcs.tokenRpcs.getToken.request(token);
+    final tokenData = await getTokenData(request, _rpcs);
     if (tokenData == null) {
       return Response(HttpStatus.unauthorized);
     }
@@ -153,11 +146,7 @@ class ProjectService {
   @Route.get('/<projectKey>/conversations/<conversationId>')
   @Route.get('/<projectKey>/conversations/<conversationId>/')
   Future<Response> getConversationById(Request request) async {
-    final token = request.headers[HttpHeaders.authorizationHeader];
-    if (token == null) {
-      return Response(HttpStatus.unauthorized);
-    }
-    final tokenData = await _rpcs.tokenRpcs.getToken.request(token);
+    final tokenData = await getTokenData(request, _rpcs);
     if (tokenData == null) {
       return Response(HttpStatus.unauthorized);
     }
@@ -187,11 +176,7 @@ class ProjectService {
   @Route.get('/<projectKey>/conversations/<conversationId>/messages')
   @Route.get('/<projectKey>/conversations/<conversationId>/messages/')
   Future<Response> getMessages(Request request) async {
-    final token = request.headers[HttpHeaders.authorizationHeader];
-    if (token == null) {
-      return Response(HttpStatus.unauthorized);
-    }
-    final tokenData = await _rpcs.tokenRpcs.getToken.request(token);
+    final tokenData = await getTokenData(request, _rpcs);
     if (tokenData == null) {
       return Response(HttpStatus.unauthorized);
     }
@@ -203,6 +188,6 @@ class ProjectService {
     }
     final conversationId = params(request, 'conversationId');
     final messages = await _rpcs.messagesRpcs.getMessagesForConversation.request(GetMessagesForConversationParameters(projectKey, conversationId));
-    return Response.ok(json.encode(messages.map(messageToJson)));
+    return Response.ok(json.encode(messages.map((message) => messageToJson(message, filter: false)).toList()));
   }
 }

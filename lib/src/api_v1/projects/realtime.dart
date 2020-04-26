@@ -410,7 +410,6 @@ class Realtime {
     ];
     logger.fine('new status $newStatusDetails');
     message = await _updateMessageStatus.request(UpdateMessageStatusParameters(projectKey, message.conversationId, messageId, newStatusDetails));
-    print(message);
     final conversation = await _getConversationById.request(GetConversationByIdParameters(projectKey, message.conversationId));
     final others = _connectedUsers.where((user) => conversation.users.contains(user.data)).where((user) => user.data.id != _user.data.id);
     final connectedOthers = [

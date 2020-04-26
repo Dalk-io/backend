@@ -404,8 +404,8 @@ void main() {
     test('valid conversation', () async {
       final peer = PeerMock();
       await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
-      final response = await realtime.getConversationDetail(Parameters('getConversationDetails', {'id': '12'}), peer);
-      expect(response['id'], '12');
+      final response = await realtime.getConversationDetail(Parameters('getConversationDetails', {'id': '7'}), peer);
+      expect(response['id'], '7');
       expect(response['messages'].length, 1);
     });
   });

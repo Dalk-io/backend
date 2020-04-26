@@ -1,4 +1,5 @@
 import 'package:backend/src/databases/account/save_account.dart';
+import 'package:backend/src/databases/account/update_account.dart';
 import 'package:backend/src/databases/contact/save_contact.dart';
 import 'package:backend/src/databases/conversation/save_conversation.dart';
 import 'package:backend/src/databases/conversation/update_conversation_last_update.dart';
@@ -23,6 +24,7 @@ class ToDatabase {
   final SaveMessageToDatabase saveMessageToDatabase;
 
   final SaveAccountToDatabase saveAccountToDatabase;
+  final UpdateAccountToDatabase updateAccountToDatabase;
 
   final SaveProjectToDatabase saveProjectToDatabase;
   final UpdateProjectToDatabase updateProjectToDatabase;
@@ -45,5 +47,6 @@ class ToDatabase {
     this.saveUserToDatabase,
     this.updateUserByIdFromDatabase,
     this.updateProjectToDatabase,
+    this.updateAccountToDatabase,
   );
 }

@@ -86,6 +86,7 @@ ToDatabase generateToDatabase(PgPool pgPool) => ToDatabase(
       SaveUserToDatabase(pgPool),
       UpdateUserByIdFromDatabase(pgPool),
       UpdateProjectToDatabase(pgPool),
+      UpdateAccountToDatabase(pgPool),
     );
 
 MessageRpcs generateMessageRpcs(FromDatabase from, ToDatabase to) => MessageRpcs(
@@ -135,6 +136,7 @@ AccountRpcs generateAccountRpcs(FromDatabase from, ToDatabase to) => AccountRpcs
       GetAccountByEmail(from.getAccountByEmailFromDatabase),
       GetAccountByEmailAndPassword(from.getAccountByEmailAndPasswordFromDatabase),
       GetAccountById(from.getAccountById),
+      UpdateAccount(to.updateAccountToDatabase),
     );
 
 TokenRpcs generateTokenRpcs(FromDatabase from, ToDatabase to) => TokenRpcs(

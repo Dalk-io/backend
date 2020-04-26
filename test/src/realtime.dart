@@ -67,6 +67,25 @@ Realtime initRealtime(String projectKey, {bool withWebHook = false}) {
 
   when(getConversationById.request(GetConversationByIdParameters(testProjectId, '6')))
       .thenAnswer((_) async => ConversationData(id: '6', admins: [UserData('1')], users: [UserData('1'), UserData('2')]));
+  when(getConversationById.request(GetConversationByIdParameters(testProjectId, '7'))).thenAnswer((_) async => ConversationData(id: '7', admins: [
+        UserData('1')
+      ], users: [
+        UserData('1'),
+        UserData('2')
+      ], messages: [
+        MessageData(
+          '1',
+          testProjectId,
+          '6',
+          '1',
+          'Hello world',
+          DateTime.utc(2020, 01, 01, 14, 30),
+          [
+            MessageStatusByUserData('1', MessageStatus.seen),
+            MessageStatusByUserData('2', MessageStatus.seen),
+          ],
+        ),
+      ]));
   when(getConversationById.request(GetConversationByIdParameters(testProjectId, '1')))
       .thenAnswer((_) async => ConversationData(id: '1', admins: [UserData('1')], users: [UserData('1'), UserData('2')]));
   when(getConversationById.request(GetConversationByIdParameters(testProjectId, '12'))).thenAnswer((_) async => ConversationData(
@@ -93,6 +112,10 @@ Realtime initRealtime(String projectKey, {bool withWebHook = false}) {
       .thenAnswer((_) async => null);
 
   when(getMessagesForConversation.request(GetMessagesForConversationParameters(testProjectId, '6'))).thenAnswer((_) async => <MessageData>[
+        MessageData('2', testProjectId, '6', '1', 'How are you?', DateTime(2020, 01, 01, 14, 30), []),
+        MessageData('1', testProjectId, '6', '1', 'Hello world', DateTime(2020, 01, 01, 14, 30), []),
+      ]);
+  when(getMessagesForConversation.request(GetMessagesForConversationParameters(testProjectId, '6', from: 0, to: -1))).thenAnswer((_) async => <MessageData>[
         MessageData('2', testProjectId, '6', '1', 'How are you?', DateTime(2020, 01, 01, 14, 30), []),
         MessageData('1', testProjectId, '6', '1', 'Hello world', DateTime(2020, 01, 01, 14, 30), []),
       ]);
