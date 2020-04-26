@@ -6,6 +6,8 @@ import 'package:backend/src/api_v1/projects/models/update_project/update_project
 import 'package:backend/src/api_v1/projects/realtime.dart';
 import 'package:backend/src/data/project/project.dart';
 import 'package:backend/src/middlewares/check_project_exist.dart';
+import 'package:backend/src/rpc/conversation/parameters.dart';
+import 'package:backend/src/rpc/messages/parameters.dart';
 import 'package:backend/src/rpc/project/parameters.dart';
 import 'package:backend/src/rpc/rpcs.dart';
 import 'package:backend/src/utils/message_to_json.dart';
@@ -76,6 +78,7 @@ class ProjectService {
     }
   }
 
+  @Route('PATCH', '/<projectKey>')
   @Route('PATCH', '/<projectKey>/')
   Future<Response> updateProject(Request request) async {
     final projectKey = params(request, 'projectKey');
@@ -97,11 +100,13 @@ class ProjectService {
     final isDevelopmentProject = projectKey == projectData.development.key;
     final production = projectData.production?.copyWith(
       webHook: !isDevelopmentProject ? updateProjectDataRequest.webHook : projectData.production.webHook,
-      isSecure: !isDevelopmentProject ? updateProjectDataRequest.isSecure : projectData.production.isSecure,
+      isSecure: !isDevelopmentProject ? updateProjectDataRequest.isSecure ?? projectData.production.isSecure : projectData.production.isSecure,
     );
+    final newDevelopmentIsSecure =
+        isDevelopmentProject ? updateProjectDataRequest.isSecure ?? projectData.development.isSecure : projectData.development.isSecure;
     final development = projectData.development.copyWith(
       webHook: isDevelopmentProject ? updateProjectDataRequest.webHook : projectData.development.webHook,
-      isSecure: isDevelopmentProject ? updateProjectDataRequest.isSecure : projectData.development.isSecure,
+      isSecure: newDevelopmentIsSecure,
     );
     final updatedProjectData = projectData.copyWith(
       production: production,
@@ -118,6 +123,7 @@ class ProjectService {
   }
 
   @Route.get('/<projectKey>/conversations')
+  @Route.get('/<projectKey>/conversations/')
   Future<Response> getConversations(Request request) async {
     final token = request.headers[HttpHeaders.authorizationHeader];
     if (token == null) {
@@ -139,13 +145,13 @@ class ProjectService {
       conversationJson['messages'] = [if (conversation.messages.isNotEmpty) messageToJson(conversation.messages.first, filter: false)];
       return conversationJson;
     }).toList(growable: false);
-    return Response(
-      HttpStatus.ok,
-      body: json.encode(jsonResponse),
+    return Response.ok(
+      json.encode(jsonResponse),
     );
   }
 
   @Route.get('/<projectKey>/conversations/<conversationId>')
+  @Route.get('/<projectKey>/conversations/<conversationId>/')
   Future<Response> getConversationById(Request request) async {
     final token = request.headers[HttpHeaders.authorizationHeader];
     if (token == null) {
@@ -162,13 +168,41 @@ class ProjectService {
       return Response.notFound('');
     }
     final conversationId = params(request, 'conversationId');
-    // final conversationData = _rpcs.conversationsRpcs.
-
-    return Response(HttpStatus.notImplemented);
+    final conversationData = await _rpcs.conversationRpcs.getConversationById.request(
+      GetConversationByIdParameters(
+        projectKey,
+        conversationId,
+        from: int.tryParse(request.requestedUri.queryParameters['from']) ?? 0,
+        to: int.tryParse(request.requestedUri.queryParameters['to']) ?? 1,
+      ),
+    );
+    return Response.ok(json.encode(
+      <String, dynamic>{
+        ...conversationData.toJson(),
+        'messages': conversationData.messages.map((message) => messageToJson(message, filter: false)).toList(),
+      },
+    ));
   }
 
+  @Route.get('/<projectKey>/conversations/<conversationId>/messages')
   @Route.get('/<projectKey>/conversations/<conversationId>/messages/')
   Future<Response> getMessages(Request request) async {
-    return Response(HttpStatus.notImplemented);
+    final token = request.headers[HttpHeaders.authorizationHeader];
+    if (token == null) {
+      return Response(HttpStatus.unauthorized);
+    }
+    final tokenData = await _rpcs.tokenRpcs.getToken.request(token);
+    if (tokenData == null) {
+      return Response(HttpStatus.unauthorized);
+    }
+    final accountData = await _rpcs.accountRpcs.getAccountById.request(tokenData.accountId);
+    final projectData = await _rpcs.projectRpcs.getProjectById.request(accountData.projectId);
+    final projectKey = params(request, 'projectKey');
+    if (![projectData.development.key, if (projectData.production?.key != null) projectData.production.key].contains(projectKey)) {
+      return Response.notFound('');
+    }
+    final conversationId = params(request, 'conversationId');
+    final messages = await _rpcs.messagesRpcs.getMessagesForConversation.request(GetMessagesForConversationParameters(projectKey, conversationId));
+    return Response.ok(json.encode(messages.map(messageToJson)));
   }
 }

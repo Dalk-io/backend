@@ -69,7 +69,7 @@ Realtime initRealtime(String projectKey, {bool withWebHook = false}) {
       .thenAnswer((_) async => ConversationData(id: '6', admins: [UserData('1')], users: [UserData('1'), UserData('2')]));
   when(getConversationById.request(GetConversationByIdParameters(testProjectId, '1')))
       .thenAnswer((_) async => ConversationData(id: '1', admins: [UserData('1')], users: [UserData('1'), UserData('2')]));
-  when(getConversationById.request(GetConversationByIdParameters(testProjectId, '12', getMessages: true))).thenAnswer((_) async => ConversationData(
+  when(getConversationById.request(GetConversationByIdParameters(testProjectId, '12'))).thenAnswer((_) async => ConversationData(
       id: '12',
       admins: [UserData('1')],
       users: [UserData('1'), UserData('2')],

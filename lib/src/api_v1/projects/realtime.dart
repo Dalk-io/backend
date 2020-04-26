@@ -308,7 +308,7 @@ class Realtime {
     }
     final conversationId = parameters['id'].asString;
     logger.fine('get conversation parameters $conversationId');
-    final conversation = await _getConversationById.request(GetConversationByIdParameters(projectKey, conversationId, getMessages: true));
+    final conversation = await _getConversationById.request(GetConversationByIdParameters(projectKey, conversationId));
     if (conversation == null) {
       logger.warning('Conversation $conversationId not found');
       logger.info('getConversationDetail took ${sw.elapsed}');

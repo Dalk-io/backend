@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:backend/backend.dart';
 import 'package:backend/src/data/conversation/conversation.dart';
-import 'package:backend/src/data/message/message.dart';
 import 'package:backend/src/data/user/user.dart';
 import 'package:backend/src/endpoint.dart';
 import 'package:backend/src/rpc/conversation/parameters.dart';
@@ -28,17 +27,18 @@ class GetConversationById extends Endpoint<GetConversationByIdParameters, Conver
     final result = conversationData.first;
     final admins = await _getUsersFromIds(input.projectId, (json.decode(result[3] as String) as List).cast<String>());
     final users = await _getUsersFromIds(input.projectId, (json.decode(result[4] as String) as List).cast<String>());
-    final messages = <MessageData>[];
-    if (input.getMessages) {
-      messages.addAll(await _getMessagesForConversation.request(GetMessagesForConversationParameters(input.projectId, input.conversationId, from: 0, to: -1)));
-    }
     final conversation = ConversationData(
       id: result[0] as String,
       subject: result[1] as String,
       avatar: result[2] as String,
       admins: admins,
       users: users,
-      messages: messages,
+      messages: await _getMessagesForConversation.request(GetMessagesForConversationParameters(
+        input.projectId,
+        input.conversationId,
+        from: input.from,
+        to: input.to,
+      )),
       isGroup: result[5] as bool,
     );
     return conversation;
