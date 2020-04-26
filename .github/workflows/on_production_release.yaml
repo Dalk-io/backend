@@ -1,0 +1,37 @@
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - "*-production"
+
+jobs:
+  build_and_deploy_to_production:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_KEY }}
+          name: id_rsa
+          known_hosts: ${{ secrets.KNOWN_HOSTS }}
+      - name: Rm backend folder
+        run: |
+          ssh root@51.15.215.104 'rm -rf backend'
+      - name: Create backend folder
+        run: |
+          ssh root@51.15.215.104 'mkdir backend'
+      - name: Upload backend
+        run: |
+          scp -r bin lib pubspec.yaml pubspec.lock root@51.15.215.104:/root/backend
+      - name: Connect to server and launch new version
+        run: |
+          ssh root@51.15.215.104 /bin/bash << EOF
+            killall dart || echo "Process was not running."
+            cd backend
+            /usr/lib/dart/bin/pub get
+            /usr/lib/dart/bin/pub run build_runner build
+            cd ..
+            /usr/lib/dart/bin/dart backend/bin/main.dart >> backend.log &
+          EOF

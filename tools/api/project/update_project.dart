@@ -9,7 +9,7 @@ void main(List<String> arguments) async {
     headers: {
       HttpHeaders.authorizationHeader: arguments.first,
     },
-    body: json.encode({'isSecure': false, 'webHook': null}),
+    body: json.encode({'isSecure': true, 'webHook': 'test.fr'}),
   );
   print(response.statusCode);
   print(response.body);
