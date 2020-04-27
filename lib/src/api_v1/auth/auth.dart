@@ -46,9 +46,12 @@ class AuthService {
     await _tokenRpcs.saveToken.request(SaveTokenParameters(token, account.id, DateTime.now().toUtc()));
     final projectData = await _projectRpcs.getProjectById.request(account.projectId);
     final response = LoginDataResponse(token, account.copyWith(projectId: null, password: null), projectData.copyWith(id: null));
-    return Response(
-      HttpStatus.ok,
-      body: json.encode(response.toJson()),
+    return Response.ok(
+      json.encode(response.toJson()),
+      headers: {
+        HttpHeaders.contentTypeHeader: ContentType.json.toString(),
+        HttpHeaders.serverHeader: null,
+      },
     );
   }
 
@@ -98,6 +101,10 @@ class AuthService {
           'message': 'Bad required parameters',
           'data': 'Supported value are [starter|complete]',
         }),
+        headers: {
+          HttpHeaders.contentTypeHeader: ContentType.json.toString(),
+          HttpHeaders.serverHeader: null,
+        },
       );
     }
     final registerData = RegisterDataRequest.fromJson(body);
@@ -109,6 +116,10 @@ class AuthService {
           'message': 'Password is too short',
           'data': password.length,
         }),
+        headers: {
+          HttpHeaders.contentTypeHeader: ContentType.json.toString(),
+          HttpHeaders.serverHeader: null,
+        },
       );
     }
     final encryptedPassword = sha512.convert(utf8.encode(password)).toString();
@@ -141,6 +152,10 @@ class AuthService {
     return Response(
       HttpStatus.created,
       body: json.encode(response.toJson()),
+      headers: {
+        HttpHeaders.contentTypeHeader: ContentType.json.toString(),
+        HttpHeaders.serverHeader: null,
+      },
     );
   }
 
