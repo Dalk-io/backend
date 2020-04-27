@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:backend/backend.dart';
 import 'package:logging/logging.dart';
 import 'package:postgres_pool/postgres_pool.dart';
@@ -48,11 +50,19 @@ void main(List<String> arguments) async {
     userRpcs,
   );
 
+  SecurityContext securityContext;
+  if (Platform.environment['USE_SSL'] == 'true') {
+    securityContext = SecurityContext()
+      ..useCertificateChain('/etc/letsencrypt/live/staging.api.dalk.io/fullchain.pem')
+      ..usePrivateKey('/etc/letsencrypt/live/staging.api.dalk.io/privkey.pem');
+  }
+
   final backend = Backend(rpcs);
   final server = await shelf_io.serve(
     backend.handler,
     '0.0.0.0',
     443,
+    securityContext: securityContext,
   );
 
   _logger.info('listening http://${server.address.address}:${server.port}');
