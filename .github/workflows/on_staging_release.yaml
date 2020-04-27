@@ -32,5 +32,5 @@ jobs:
             /usr/lib/dart/bin/pub run build_runner build --delete-conflicting-outputs
             /usr/lib/dart/bin/dart2native bin/main.dart
             cd ..
-            export USE_SSL=true nohup backend/bin/main.exe >> backend.log 2>&1 &
+            USE_SSL=true nohup backend/bin/main.exe >> backend.log 2>&1 &
           ENDSSH
