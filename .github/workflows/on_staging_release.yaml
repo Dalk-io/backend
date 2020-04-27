@@ -16,11 +16,11 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           name: id_rsa
           known_hosts: ${{ secrets.KNOWN_HOSTS }}
-      - name: Upload backend binary
+      - name: Remove backend folder
         run: ssh root@51.15.141.25 'rm -rf backend'
-      - name: Upload backend binary
+      - name: Create backend folder
         run: ssh root@51.15.141.25 'mkdir backend'
-      - name: Upload backend binary
+      - name: Upload backend files
         run: scp -r bin lib pubspec.yaml pubspec.lock root@51.15.141.25:/root/backend
       - name: Connect to staging server, build, compile and launch
         run: |
@@ -31,5 +31,5 @@ jobs:
             /usr/lib/dart/bin/pub run build_runner build
             /usr/lib/dart/bin/dart2native bin/main.dart
             cd ..
-            backend bin/main.exe >> backend.log &
+            bin/main.exe >> backend.log &
           EOF
