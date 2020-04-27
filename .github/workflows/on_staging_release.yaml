@@ -8,8 +8,6 @@ on:
 jobs:
   build_and_deploy_to_staging:
     runs-on: ubuntu-latest
-    container:
-      image: google/dart:latest
     steps:
       - uses: actions/checkout@v2
       - name: Install SSH key
@@ -18,19 +16,20 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           name: id_rsa
           known_hosts: ${{ secrets.KNOWN_HOSTS }}
-      - name: Pub get
-        run: pub get
-      - name: Build
-        run: pub run build_runner build
-      - name: Compile
-        run: dart2native bin/main.dart
-      - name: Add staging server to known_hosts
-        run: ssh-keyscan -H 51.15.141.25 >> ~/.ssh/known_hosts
       - name: Upload backend binary
-        run: scp -i ~/.ssh/id_rsa -r bin/main.exe root@51.15.141.25:/root/bin
-      - name: Launch
+        run: ssh root@51.15.141.25 /bin/bash 'rm -rf backend'
+      - name: Upload backend binary
+        run: ssh root@51.15.141.25 /bin/bash 'mkdir backend'
+      - name: Upload backend binary
+        run: scp -r bin lib pubspec.yaml pubspec.lock root@51.15.141.25:/root/backend
+      - name: Connect to staging server, build, compile and launch
         run: |
-          ssh -i ~/.ssh/id_rsa root@51.15.141.25 /bin/bash << EOF
+          ssh root@51.15.141.25 /bin/bash << EOF
+            cd backend
             killall main.exe || echo "Process was not running."
-            bin/main.exe >> backend.log &
+            /usr/lib/dart/bin/pub get
+            /usr/lib/dart/bin/pub run build_runner build
+            /usr/lib/dart/bin/dart2native bin/main.dart
+            cd ..
+            backend bin/main.exe >> backend.log &
           EOF
