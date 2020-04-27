@@ -32,4 +32,5 @@ jobs:
             /usr/lib/dart/bin/dart2native bin/main.dart
             cd ..
             backend/bin/main.exe >> backend.log &
+            exit 0
           EOF
