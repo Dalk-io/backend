@@ -24,6 +24,8 @@ jobs:
         run: pub run build_runner build
       - name: Compile
         run: dart2native bin/main.dart
+      - name: Add production server to known_hosts
+        run: ssh-keyscan -H 51.15.215.104 >> ~/.ssh/known_hosts
       - name: Upload backend binray
         run: |
           scp -r bin/main.exe root@51.15.215.104:/root/bin
