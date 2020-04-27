@@ -6,6 +6,7 @@ import 'package:backend/src/data/conversation/conversation.dart';
 import 'package:backend/src/data/message/message.dart';
 import 'package:backend/src/data/project/project.dart';
 import 'package:backend/src/data/user/user.dart';
+import 'package:backend/src/rpc/user/parameters.dart';
 import 'package:crypto/crypto.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:json_rpc_2/error_code.dart';
@@ -253,7 +254,7 @@ void main() {
       expect(true, isTrue);
     });
 
-    test('that is not mine', () async {
+    test('where i am not an admin', () async {
       when(realtime.getConversationById.request(any))
           .thenAnswer((_) async => ConversationData(id: '1', subject: null, avatar: null, admins: [UserData('2')], users: [UserData('1'), UserData('2')]));
       final peer = PeerMock();
@@ -278,338 +279,371 @@ void main() {
     });
   });
 
-  // group('set conversation options', () {
-  //   test('with existing conversation', () async {
-  //     final peer = PeerMock();
-  //     realtime.addPeer(peer);
-  //     await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
-  //     await realtime.setConversationOptions(
-  //       Parameters(
-  //         'setConversationOptions',
-  //         <String, dynamic>{
-  //           'conversationId': '1',
-  //           'subject': 'Test',
-  //         },
-  //       ),
-  //       peer,
-  //     );
-  //     expect(true, isTrue);
-  //   });
+  group('get or create conversation', () {
+    test('without conversationId in parameters', () async {
+      final realtime = initRealtime(starterProjectNotSecure);
+      final peer = PeerMock();
+      realtime.addPeer(peer);
+      await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+      try {
+        await realtime.getOrCreateConversation(
+          Parameters(
+            'getOrCreateConversation',
+            <String, dynamic>{},
+          ),
+          peer,
+        );
+        expect(true, isTrue);
+      } on RpcException catch (e) {
+        expect(e.code, INVALID_PARAMS);
+      }
+    });
 
-  //   test('with non existing conversation', () async {
-  //     final peer = PeerMock();
-  //     realtime.addPeer(peer);
-  //     await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
-  //     try {
-  //       await realtime.setConversationOptions(
-  //         Parameters(
-  //           'setConversationOptions',
-  //           <String, dynamic>{
-  //             'conversationId': '1',
-  //             'subject': 'Test',
-  //           },
-  //         ),
-  //         peer,
-  //       );
-  //     } on RpcException catch (e) {
-  //       expect(e.code, HttpStatus.notFound);
-  //       expect(e.message, 'Conversation not found');
-  //       expect((e.data as Map<String, dynamic>).containsKey('id'), isTrue);
-  //       expect((e.data as Map<String, dynamic>)['id'], '1');
-  //     }
-  //   });
+    test('get conversation', () async {
+      final realtime = initRealtime(starterProjectNotSecure);
+      when(realtime.getConversationById.request(any)).thenAnswer((_) async => ConversationData(
+          id: '1',
+          admins: [UserData('1')],
+          users: [UserData('1'), UserData('2')],
+          messages: [
+            MessageData('1', starterProjectNotSecure.development.key, '1', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30),
+                [MessageStatusByUserData('1', MessageStatus.seen), MessageStatusByUserData('2', MessageStatus.sent)])
+          ],
+          isGroup: false));
+      when(realtime.userRpcs.getUserById.request(any)).thenAnswer((_) async => UserData('1'));
+      final peer = PeerMock();
+      realtime.addPeer(peer);
+      await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+      final other = PeerMock();
+      realtime.addPeer(peer);
+      await realtime.registerUser(Parameters('registerUser', {'id': '2'}), other);
+      final conversation = await realtime.getOrCreateConversation(
+        Parameters(
+          'getOrCreateConversation',
+          <String, dynamic>{
+            'id': '1',
+          },
+        ),
+        peer,
+      );
+      expect(
+          DeepCollectionEquality().equals(conversation, {
+            'id': '1',
+            'admins': [
+              {'id': '1'}
+            ],
+            'users': [
+              {'id': '1'},
+              {'id': '2'}
+            ],
+            'messages': [
+              {
+                'id': '1',
+                'senderId': '1',
+                'text': 'Hello world',
+                'timestamp': '2020-01-01T14:30:00.000Z',
+                'statusDetails': [
+                  {'id': '2', 'status': 'sent'}
+                ],
+                'status': 'sent'
+              }
+            ],
+            'isGroup': false
+          }),
+          isTrue);
+      verifyNever(other.sendRequest('onConversationCreated', any));
+    });
 
-  //   test('without conversationId in parameters', () async {
-  //     final peer = PeerMock();
-  //     realtime.addPeer(peer);
-  //     await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
-  //     try {
-  //       await realtime.setConversationOptions(
-  //         Parameters(
-  //           'setConversationOptions',
-  //           <String, dynamic>{
-  //             'subject': 'Test',
-  //           },
-  //         ),
-  //         peer,
-  //       );
-  //     } on RpcException catch (e) {
-  //       expect(e.code, INVALID_PARAMS);
-  //     }
-  //   });
-  // });
+    test('get conversation when i am not a user', () async {
+      final realtime = initRealtime(starterProjectNotSecure);
+      when(realtime.getConversationById.request(any))
+          .thenAnswer((_) async => ConversationData(id: '1', admins: [UserData('1')], users: [UserData('1'), UserData('2')], messages: [], isGroup: false));
+      when(realtime.userRpcs.getUserById.request(any)).thenAnswer((_) async => UserData('12'));
 
-  // group('get or create conversation', () {
-  //   test('without conversationId in parameters', () async {
-  //     final peer = PeerMock();
-  //     realtime.addPeer(peer);
-  //     await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
-  //     try {
-  //       await realtime.getOrCreateConversation(
-  //         Parameters(
-  //           'getOrCreateConversation',
-  //           <String, dynamic>{},
-  //         ),
-  //         peer,
-  //       );
-  //     } on RpcException catch (e) {
-  //       expect(e.code, INVALID_PARAMS);
-  //     }
-  //   });
+      final peer = PeerMock();
+      realtime.addPeer(peer);
+      await realtime.registerUser(Parameters('registerUser', {'id': '12'}), peer);
+      try {
+        await realtime.getOrCreateConversation(
+          Parameters(
+            'getOrCreateConversation',
+            <String, dynamic>{
+              'id': '1',
+            },
+          ),
+          peer,
+        );
+        expect(true, isFalse);
+      } on RpcException catch (e) {
+        expect(e.code, HttpStatus.unauthorized);
+        expect(e.message, 'Not authorized');
+      }
+    });
 
-  //   test('get conversation', () async {
-  //     final peer = PeerMock();
-  //     realtime.addPeer(peer);
-  //     await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
-  //     final conversation = await realtime.getOrCreateConversation(
-  //       Parameters(
-  //         'getOrCreateConversation',
-  //         <String, dynamic>{
-  //           'id': '1',
-  //         },
-  //       ),
-  //       peer,
-  //     );
-  //     expect(conversation, isMap);
-  //     expect(conversation.containsKey('id'), isTrue);
-  //     expect(conversation.containsKey('admins'), isTrue);
-  //     expect(conversation.containsKey('users'), isTrue);
-  //     expect(conversation.containsKey('avatar'), isFalse);
-  //     expect(conversation.containsKey('subject'), isFalse);
-  //   });
+    test('exceed group limit', () async {
+      final realtime = initRealtime(starterProjectNotSecure);
+      when(realtime.getConversationById.request(any)).thenAnswer((_) async => null);
+      when(realtime.userRpcs.getUserById.request(any)).thenAnswer((_) async => UserData('1'));
+      final peer = PeerMock();
+      realtime.addPeer(peer);
+      await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+      try {
+        await realtime.getOrCreateConversation(
+          Parameters(
+            'getOrCreateConversation',
+            <String, dynamic>{
+              'id': '404',
+              'users': [
+                {'id': '1'},
+                {'id': '2'},
+                {'id': '3'},
+                {'id': '4'},
+                {'id': '5'},
+                {'id': '6'},
+                {'id': '7'},
+                {'id': '8'},
+                {'id': '9'},
+                {'id': '10'},
+              ],
+            },
+          ),
+          peer,
+        );
+        expect(true, isFalse);
+      } on RpcException catch (e) {
+        expect(e.code, HttpStatus.unauthorized);
+        expect(e.message, 'Group conversation limit');
+        expect(e.data, {'groupLimitation': 5, 'groupSize': 9});
+      }
+    });
 
-  //   test('group limit', () async {
-  //     final peer = PeerMock();
-  //     realtime.addPeer(peer);
-  //     await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
-  //     try {
-  //       await realtime.getOrCreateConversation(
-  //         Parameters(
-  //           'getOrCreateConversation',
-  //           <String, dynamic>{
-  //             'id': '404',
-  //             'users': [
-  //               {'id': '1'},
-  //               {'id': '2'},
-  //               {'id': '3'},
-  //               {'id': '4'},
-  //               {'id': '5'},
-  //               {'id': '6'},
-  //               {'id': '7'},
-  //               {'id': '8'},
-  //               {'id': '9'},
-  //               {'id': '10'},
-  //             ],
-  //           },
-  //         ),
-  //         peer,
-  //       );
-  //       expect(true, isFalse);
-  //     } on RpcException catch (e) {
-  //       expect(e.code, HttpStatus.unauthorized);
-  //       expect(e.message, 'Group conversation limit');
-  //       expect(e.data, {'groupLimitation': 5, 'groupSize': 9});
-  //     }
-  //   });
+    test('create group', () async {
+      final realtime = initRealtime(starterProjectNotSecure);
+      when(realtime.getConversationById.request(any)).thenAnswer((_) async => null);
+      when(realtime.userRpcs.getUserById.request(GetUserByIdParameters(starterProjectNotSecure.development.key, '1'))).thenAnswer((_) async => UserData('1'));
+      when(realtime.userRpcs.getUserById.request(GetUserByIdParameters(starterProjectNotSecure.development.key, '2'))).thenAnswer((_) async => UserData('2'));
+      final peer = PeerMock();
+      realtime.addPeer(peer);
+      final other = PeerMock();
+      await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+      await realtime.registerUser(Parameters('registerUser', {'id': '2'}), other);
+      await realtime.getOrCreateConversation(
+        Parameters(
+          'getOrCreateConversation',
+          <String, dynamic>{
+            'id': '1',
+            'users': [
+              {'id': '1'},
+              {'id': '2'},
+              {'id': '3'},
+            ],
+          },
+        ),
+        peer,
+      );
+      verify(other.sendRequest('onConversationCreated', any)).called(1);
+    });
 
-  //   test('get conversation with subject', () async {
-  //     final peer = PeerMock();
-  //     realtime.addPeer(peer);
-  //     await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
-  //     final conversation = await realtime.getOrCreateConversation(
-  //       Parameters(
-  //         'getOrCreateConversation',
-  //         <String, dynamic>{
-  //           'id': '2',
-  //         },
-  //       ),
-  //       peer,
-  //     );
-  //     expect(conversation, isMap);
-  //     expect(conversation.containsKey('id'), isTrue);
-  //     expect(conversation.containsKey('admins'), isTrue);
-  //     expect(conversation.containsKey('users'), isTrue);
-  //     expect(conversation.containsKey('avatar'), isFalse);
-  //     expect(conversation.containsKey('subject'), isTrue);
-  //   });
+    test('create 1:1', () async {
+      final realtime = initRealtime(starterProjectNotSecure);
+      when(realtime.getConversationById.request(any)).thenAnswer((_) async => null);
+      when(realtime.userRpcs.getUserById.request(GetUserByIdParameters(starterProjectNotSecure.development.key, '1'))).thenAnswer((_) async => UserData('1'));
+      when(realtime.userRpcs.getUserById.request(GetUserByIdParameters(starterProjectNotSecure.development.key, '2'))).thenAnswer((_) async => UserData('2'));
+      final peer = PeerMock();
+      realtime.addPeer(peer);
+      final other = PeerMock();
+      await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+      await realtime.registerUser(Parameters('registerUser', {'id': '2'}), other);
+      final response = await realtime.getOrCreateConversation(
+        Parameters(
+          'getOrCreateConversation',
+          <String, dynamic>{
+            'id': '1',
+            'users': [
+              {'id': '1'},
+              {'id': '2'},
+            ],
+          },
+        ),
+        peer,
+      );
+      verifyNever(other.sendRequest('onConversationCreated', any));
+      expect(
+          DeepCollectionEquality().equals(response, {
+            'id': '1',
+            'admins': [
+              {'id': '1'}
+            ],
+            'users': [
+              {'id': '1'},
+              {'id': '2'}
+            ],
+            'messages': <dynamic>[],
+            'isGroup': false
+          }),
+          isTrue);
+    });
+  });
 
-  //   test('get conversation with avatar', () async {
-  //     final peer = PeerMock();
-  //     realtime.addPeer(peer);
-  //     await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
-  //     final conversation = await realtime.getOrCreateConversation(
-  //       Parameters(
-  //         'getOrCreateConversation',
-  //         <String, dynamic>{
-  //           'id': '3',
-  //         },
-  //       ),
-  //       peer,
-  //     );
-  //     expect(conversation, isMap);
-  //     expect(conversation.containsKey('id'), isTrue);
-  //     expect(conversation.containsKey('admins'), isTrue);
-  //     expect(conversation.containsKey('users'), isTrue);
-  //     expect(conversation.containsKey('avatar'), isTrue);
-  //     expect(conversation.containsKey('subject'), isFalse);
-  //   });
+  group('get messages', () {
+    test('bad conversation id', () async {
+      final realtime = initRealtime(starterProjectNotSecure);
+      try {
+        final peer = PeerMock();
+        await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+        await realtime.getMessages(Parameters('getMessages', {'conversationId': '404'}), peer);
+        expect(true, isTrue);
+      } on RpcException catch (e) {
+        expect(e.code, HttpStatus.notFound);
+        expect(e.message, 'Conversation not found');
+        expect(e.data, {'id': '404'});
+      }
+    });
 
-  //   group('create conversation', () {
-  //     test('without to parameters', () async {
-  //       final peer = PeerMock();
-  //       realtime.addPeer(peer);
-  //       await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
-  //       try {
-  //         await realtime.getOrCreateConversation(
-  //           Parameters(
-  //             'getOrCreateConversation',
-  //             <String, dynamic>{},
-  //           ),
-  //           peer,
-  //         );
-  //       } on RpcException catch (e) {
-  //         expect(e.code, INVALID_PARAMS);
-  //       }
-  //     });
+    test('bad value of from and to', () async {
+      final realtime = initRealtime(starterProjectNotSecure);
+      final peer = PeerMock();
+      await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+      try {
+        await realtime.getMessages(Parameters('getMessages', {'from': 0, 'to': 10, 'conversationId': '1'}), peer);
+        expect(true, isFalse);
+      } on RpcException catch (e) {
+        expect(e.code, INVALID_PARAMS);
+        expect(e.message, 'to can\'t be inferior at from');
+      }
+    });
 
-  //     test('one to one', () async {
-  //       final peer = PeerMock();
-  //       final other = PeerMock();
-  //       realtime.addPeer(peer);
-  //       realtime.addPeer(other);
-  //       await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
-  //       await realtime.registerUser(Parameters('registerUser', {'id': '2'}), other);
-  //       final conversation = await realtime.getOrCreateConversation(
-  //         Parameters(
-  //           'getOrCreateConversation',
-  //           <String, dynamic>{
-  //             'id': '100',
-  //             'users': [
-  //               {'id': '1'},
-  //               {'id': '2'}
-  //             ],
-  //           },
-  //         ),
-  //         peer,
-  //       );
-  //       expect(conversation, isMap);
-  //       expect(conversation.containsKey('id'), isTrue);
-  //       expect(conversation['id'], '100');
-  //       expect(conversation.containsKey('users'), isTrue);
-  //       expect(
-  //           DeepCollectionEquality().equals(conversation['users'], [
-  //             {'id': '1'},
-  //             {'id': '2'}
-  //           ]),
-  //           isTrue);
-  //       final otherUser = realtime.connectedUsers.firstWhere((user) => user.data.id == '2');
-  //       final onConversationCreatedCalled = verifyNever(otherUser.onConversationCreated(<String, dynamic>{
-  //         'id': '1',
-  //         'admins': ['1'],
-  //         'users': ['1', '2'],
-  //       }));
-  //       expect(onConversationCreatedCalled.callCount == 0, isTrue);
-  //     });
+    test('when i am not in the conversation', () async {
+      final realtime = initRealtime(starterProjectNotSecure);
+      when(realtime.getConversationById.request(any)).thenAnswer((_) async => ConversationData(id: '1', admins: [UserData('1')], users: [UserData('2')]));
+      final peer = PeerMock();
+      await realtime.registerUser(Parameters('registerUser', {'id': '12'}), peer);
+      try {
+        await realtime.getMessages(Parameters('getMessages', {'conversationId': '1'}), peer);
+        expect(true, isFalse);
+      } on RpcException catch (e) {
+        expect(e.code, HttpStatus.unauthorized);
+        expect(e.message, 'Not authorized');
+      }
+    });
 
-  //     test('group', () async {
-  //       final peer = PeerMock();
-  //       final other = PeerMock();
-  //       when(other.sendRequest('onConversationCreated', any)).thenAnswer((_) => null);
-  //       realtime.addPeer(peer);
-  //       realtime.addPeer(other);
-  //       await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
-  //       await realtime.registerUser(Parameters('registerUser', {'id': '2'}), other);
-  //       final conversation = await realtime.getOrCreateConversation(
-  //         Parameters(
-  //           'getOrCreateConversation',
-  //           <String, dynamic>{
-  //             'id': '5',
-  //             'users': [
-  //               {'id': '1'},
-  //               {'id': '2'},
-  //               {'id': '3'}
-  //             ],
-  //           },
-  //         ),
-  //         peer,
-  //       );
-  //       expect(conversation, isMap);
-  //       expect(conversation.containsKey('id'), isTrue);
-  //       expect(conversation['id'], '5');
-  //       expect(conversation.containsKey('users'), isTrue);
-  //       expect(
-  //           DeepCollectionEquality().equals(conversation['users'], [
-  //             {'id': '1'},
-  //             {'id': '2'},
-  //             {'id': '3'}
-  //           ]),
-  //           isTrue);
-  //       verify(other.sendRequest('onConversationCreated', any)).called(1);
-  //     });
-  //   });
-  // });
+    test('get all message', () async {
+      final realtime = initRealtime(starterProjectNotSecure);
+      when(realtime.getConversationById.request(any)).thenAnswer(
+        (_) async => ConversationData(
+          id: '1',
+          admins: [UserData('1')],
+          users: [UserData('1'), UserData('2')],
+          messages: [
+            MessageData('1', starterProjectNotSecure.development.key, '1', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30),
+                [MessageStatusByUserData('1', MessageStatus.seen), MessageStatusByUserData('2', MessageStatus.sent)])
+          ],
+        ),
+      );
+      final peer = PeerMock();
+      await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+      final response = await realtime.getMessages(Parameters('getMessages', {'conversationId': '1'}), peer);
+      expect(
+          DeepCollectionEquality().equals(response, [
+            {
+              'id': '1',
+              'senderId': '1',
+              'text': 'Hello world',
+              'timestamp': '2020-01-01T14:30:00.000Z',
+              'statusDetails': [
+                {'id': '2', 'status': 'sent'}
+              ],
+              'status': 'sent'
+            }
+          ]),
+          isTrue);
+    });
+  });
 
-  // group('get messages', () {
-  //   test('bad conversation id', () async {
-  //     try {
-  //       final peer = PeerMock();
-  //       await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
-  //       await realtime.getMessages(Parameters('getMessages', {'from': 0, 'to': -1, 'conversationId': '1000'}), peer);
-  //     } on RpcException catch (e) {
-  //       expect(e.code, HttpStatus.notFound);
-  //       expect(e.message, 'Conversation not found');
-  //       expect(e.data, {'id': '1000'});
-  //     }
-  //   });
+  group('get conversation details', () {
+    Realtime realtime;
 
-  //   test('bad value of from and to', () async {
-  //     final peer = PeerMock();
-  //     await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
-  //     try {
-  //       await realtime.getMessages(Parameters('getMessages', {'from': 10, 'to': 1, 'conversationId': '12'}), peer);
-  //     } on RpcException catch (e) {
-  //       expect(e.code, INVALID_PARAMS);
-  //       expect(e.message, 'from can\'t be inferior at to');
-  //     }
-  //   });
+    setUpAll(() {
+      realtime = initRealtime(starterProjectNotSecure);
+    });
 
-  //   test('get all message', () async {
-  //     final peer = PeerMock();
-  //     await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
-  //     final response = await realtime.getMessages(Parameters('getMessages', {'from': 0, 'to': -1, 'conversationId': '6'}), peer);
-  //     expect(response.length == 2, isTrue);
-  //   });
+    test('bad conversation id', () async {
+      final peer = PeerMock();
+      await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+      try {
+        await realtime.getConversationDetail(Parameters('getConversationDetails', {'id': '12'}), peer);
+      } on RpcException catch (e) {
+        expect(e.code, HttpStatus.notFound);
+        expect(e.message, 'Conversation not found');
+        expect(e.data, {'id': '12'});
+      }
+    });
 
-  //   test('get last message', () async {
-  //     final peer = PeerMock();
-  //     await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
-  //     final response = await realtime.getMessages(Parameters('getMessages', {'from': 0, 'to': 1, 'conversationId': '6'}), peer);
-  //     expect(response.length == 1, isTrue);
-  //     expect(response.first['text'], 'How are you?');
-  //   });
-  // });
+    test('valid conversation', () async {
+      when(realtime.getConversationById.request(any)).thenAnswer((_) async => ConversationData(id: '1', admins: [
+            UserData('1')
+          ], users: [
+            UserData('1'),
+            UserData('2')
+          ], messages: [
+            MessageData('1', starterProjectNotSecure.development.key, '1', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30), [
+              MessageStatusByUserData('1', MessageStatus.seen),
+              MessageStatusByUserData('2', MessageStatus.sent),
+            ])
+          ]));
+      final peer = PeerMock();
+      await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+      final response = await realtime.getConversationDetail(Parameters('getConversationDetails', {'id': '1'}), peer);
+      expect(
+          DeepCollectionEquality().equals(response, {
+            'id': '1',
+            'admins': [
+              {'id': '1'}
+            ],
+            'users': [
+              {'id': '1'},
+              {'id': '2'}
+            ],
+            'messages': [
+              {
+                'id': '1',
+                'senderId': '1',
+                'text': 'Hello world',
+                'timestamp': '2020-01-01T14:30:00.000Z',
+                'statusDetails': [
+                  {'id': '2', 'status': 'sent'}
+                ],
+                'status': 'sent',
+              }
+            ],
+            'isGroup': false
+          }),
+          isTrue);
+    });
 
-  // group('get conversation details', () {
-  //   test('bad conversation id', () async {
-  //     final peer = PeerMock();
-  //     await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
-  //     try {
-  //       await realtime.getConversationDetail(Parameters('getConversationDetails', {'id': '12'}), peer);
-  //     } on RpcException catch (e) {
-  //       expect(e.code, HttpStatus.notFound);
-  //       expect(e.message, 'Conversation not found');
-  //       expect(e.data, {'id': '12'});
-  //     }
-  //   });
-
-  //   test('valid conversation', () async {
-  //     final peer = PeerMock();
-  //     await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
-  //     final response = await realtime.getConversationDetail(Parameters('getConversationDetails', {'id': '7'}), peer);
-  //     expect(response['id'], '7');
-  //     expect(response['messages'].length, 1);
-  //   });
-  // });
+    test('when i am not in the conversation', () async {
+      when(realtime.getConversationById.request(any)).thenAnswer((_) async => ConversationData(id: '1', admins: [
+            UserData('1')
+          ], users: [
+            UserData('1'),
+            UserData('2')
+          ], messages: [
+            MessageData('1', starterProjectNotSecure.development.key, '1', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30), [
+              MessageStatusByUserData('1', MessageStatus.seen),
+              MessageStatusByUserData('2', MessageStatus.sent),
+            ])
+          ]));
+      final peer = PeerMock();
+      await realtime.registerUser(Parameters('registerUser', {'id': '12'}), peer);
+      try {
+        await realtime.getConversationDetail(Parameters('getConversationDetails', {'id': '1'}), peer);
+        expect(true, isFalse);
+      } on RpcException catch (e) {
+        expect(e.code, HttpStatus.unauthorized);
+        expect(e.message, 'Not authorized');
+      }
+    });
+  });
 
   // group('send message', () {
   //   test('conversation not found', () async {

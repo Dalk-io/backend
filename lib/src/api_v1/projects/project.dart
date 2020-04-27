@@ -116,7 +116,7 @@ class ProjectService {
       updatedProjectData.production?.isSecure,
       updatedProjectData.development.isSecure,
     ));
-    return Response(HttpStatus.ok);
+    return Response.ok(null);
   }
 
   @Route.get('/<projectKey>/conversations')
@@ -140,6 +140,10 @@ class ProjectService {
     }).toList(growable: false);
     return Response.ok(
       json.encode(jsonResponse),
+      headers: {
+        HttpHeaders.contentTypeHeader: ContentType.json.toString(),
+        HttpHeaders.serverHeader: null,
+      },
     );
   }
 
@@ -165,12 +169,18 @@ class ProjectService {
         to: int.tryParse(request.requestedUri.queryParameters['to']) ?? 1,
       ),
     );
-    return Response.ok(json.encode(
-      <String, dynamic>{
-        ...conversationData.toJson(),
-        'messages': conversationData.messages.map((message) => messageToJson(message, filter: false)).toList(),
+    return Response.ok(
+      json.encode(
+        <String, dynamic>{
+          ...conversationData.toJson(),
+          'messages': conversationData.messages.map((message) => messageToJson(message, filter: false)).toList(),
+        },
+      ),
+      headers: {
+        HttpHeaders.contentTypeHeader: ContentType.json.toString(),
+        HttpHeaders.serverHeader: null,
       },
-    ));
+    );
   }
 
   @Route.get('/<projectKey>/conversations/<conversationId>/messages')
@@ -188,6 +198,12 @@ class ProjectService {
     }
     final conversationId = params(request, 'conversationId');
     final messages = await _rpcs.messagesRpcs.getMessagesForConversation.request(GetMessagesForConversationParameters(projectKey, conversationId));
-    return Response.ok(json.encode(messages.map((message) => messageToJson(message, filter: false)).toList()));
+    return Response.ok(
+      json.encode(messages.map((message) => messageToJson(message, filter: false)).toList()),
+      headers: {
+        HttpHeaders.contentTypeHeader: ContentType.json.toString(),
+        HttpHeaders.serverHeader: null,
+      },
+    );
   }
 }

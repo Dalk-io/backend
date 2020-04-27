@@ -1,6 +1,7 @@
 import 'package:backend/backend.dart';
 import 'package:logging/logging.dart';
 import 'package:postgres_pool/postgres_pool.dart';
+import 'package:retry/retry.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 
 void main(List<String> arguments) async {
@@ -17,7 +18,9 @@ void main(List<String> arguments) async {
       password: 'MmA1@<s|cV#"\'0BX}[zJ4',
       requireSsl: true,
     ),
-    settings: PgPoolSettings()..concurrency = 100,
+    settings: PgPoolSettings()
+      ..concurrency = 100
+      ..retryOptions = RetryOptions(),
   );
 
   final fromDatabase = generateFromDatabase(postgresPool);

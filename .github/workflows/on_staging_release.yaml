@@ -1,12 +1,12 @@
-name: Deploy to production
+name: Deploy to staging
 
 on:
   push:
     tags:
-      - "*-production"
+      - "*-staging"
 
 jobs:
-  build_and_deploy_to_production:
+  build_and_deploy_to_staging:
     runs-on: ubuntu-latest
     container:
       image: google/dart:latest
@@ -26,10 +26,10 @@ jobs:
         run: dart2native bin/main.dart
       - name: Upload backend binray
         run: |
-          scp -r bin/main.exe root@51.15.215.104:/root/bin
+          scp -r bin/main.exe root@51.15.141.25:/root/bin
       - name: Launch
         run: |
-          ssh root@51.15.215.104 /bin/bash << EOF
+          ssh root@51.15.141.25 /bin/bash << EOF
             killall main.exe || echo "Process was not running."
             bin/main.exe >> backend.log &
           EOF

@@ -1,16 +1,38 @@
-import 'dart:convert';
 import 'dart:io';
 
-import 'package:backend/src/utils/pretty_print_json.dart';
-import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
 
 void main(List<String> arguments) async {
-  final response = await http.get(
-    'http://localhost:443/v1/auth/is_logged',
-    headers: {
-      HttpHeaders.authorizationHeader: arguments.first,
-    },
+  final sw = Stopwatch()..start();
+  final httpClient = HttpClient();
+  final client = IOClient(httpClient);
+  final requests = List.generate(
+    10000,
+    (_) => client.get(
+      'https://api.dalk.io/v1/auth/is_logged',
+      headers: {
+        HttpHeaders.authorizationHeader: arguments.first,
+      },
+    ),
   );
-  print(response.statusCode);
-  prettyPrintJson(json.decode(response.body));
+
+  print('waiting request to complete');
+  final results = await Future.wait(requests);
+  print('end in ${sw.elapsed}');
+
+  print(results.where((result) => result.statusCode != 200).length);
+  if (results.where((result) => result.statusCode != 200).isNotEmpty) {
+    print(results.where((result) => result.statusCode != 200).first.body);
+  }
+  // results.where((result) => result.statusCode == 200).forEach((result) => prettyPrintJson(json.decode(result.body)));
+
+  // final response = await http.get(
+  //   'http://localhost:443/v1/auth/is_logged',
+  //   headers: {
+  //     HttpHeaders.authorizationHeader: arguments.first,
+  //   },
+  // );
+  // print(response.statusCode);
+  // print(response.headers);
+  // prettyPrintJson(json.decode(response.body));
 }

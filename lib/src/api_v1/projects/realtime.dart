@@ -20,7 +20,6 @@ import 'package:backend/src/rpc/message/parameters.dart';
 import 'package:backend/src/rpc/message/save_message.dart';
 import 'package:backend/src/rpc/message/update_message_status.dart';
 import 'package:backend/src/rpc/messages/get_messages_for_conversation.dart';
-import 'package:backend/src/rpc/messages/parameters.dart';
 import 'package:backend/src/rpc/user/parameters.dart';
 import 'package:backend/src/utils/message_to_json.dart';
 import 'package:crypto/crypto.dart';
@@ -211,16 +210,22 @@ class Realtime {
     final user = await userRpcs.getUserById.request(GetUserByIdParameters(projectKey, _user.data.id));
     final existingConversation = await getConversationById.request(GetConversationByIdParameters(projectKey, conversationId));
     if (existingConversation != null) {
+      if (!existingConversation.users.contains(user)) {
+        throw RpcException(HttpStatus.unauthorized, 'Not authorized');
+      }
       logger.fine('get conversations ${existingConversation.id} ${existingConversation.users} ${existingConversation.subject} ${existingConversation.avatar}');
       logger.info('getOrCreateConversation took ${sw.elapsed}');
-      return existingConversation.toJson();
+      final response = existingConversation.toJson();
+      response['messages'] = existingConversation.messages.map(messageToJson).toList();
+      return response;
     }
     final _to = parameters['users']
         .asList
         .cast<Map>()
         .cast<Map<String, dynamic>>()
         .map<UserData>((user) => UserData(user['id'] as String, name: user['name'] as String, avatar: user['avatar'] as String))
-        .where((to) => to.id != _user.data.id);
+        .where((to) => to.id != _user.data.id)
+        .toSet();
     final to = <UserData>[];
     for (final t in _to) {
       final u = await userRpcs.getUserById.request(GetUserByIdParameters(projectKey, t.id));
@@ -260,6 +265,7 @@ class Realtime {
       ..._connectedUsers.where((element) => element.data.id == user.id).where((element) => element.peer != _user.peer)
     ];
     final response = conversation.toJson();
+    response['messages'] = conversation.messages.map((message) => messageToJson(message)).toList();
     if (to.length > 1) {
       for (final other in connectedOthers) {
         logger.fine('on conversation created ${other.data.id} $conversation');
@@ -281,23 +287,19 @@ class Realtime {
     final to = parameters['to'].asIntOr(-1);
     final conversationId = parameters['conversationId'].asString;
     logger.fine('get messages parameters $from $to');
-    if (to != -1 && from > to) {
-      throw RpcException.invalidParams('from can\'t be inferior at to');
+    if (to != -1 && from < to) {
+      throw RpcException.invalidParams('to can\'t be inferior at from');
     }
-    final conversation = getConversationById.request(GetConversationByIdParameters(projectKey, conversationId));
+    final conversation = await getConversationById.request(GetConversationByIdParameters(projectKey, conversationId, from: from, to: to));
     if (conversation == null) {
       logger.warning('Conversation $conversationId not found');
       logger.info('getMessages took ${sw.elapsed}');
       throw RpcException(HttpStatus.notFound, 'Conversation not found', data: <String, dynamic>{'id': conversationId});
     }
-    var messages = await getMessagesForConversation.request(GetMessagesForConversationParameters(projectKey, conversationId, from: from, to: to));
-    if (messages.length > from) {
-      messages = messages.skip(from).toList();
+    if (!conversation.users.contains(_user.data)) {
+      throw RpcException(HttpStatus.unauthorized, 'Not authorized');
     }
-    if (to != -1 && messages.length >= to - from) {
-      messages = messages.take(to - from).toList();
-    }
-    final response = messages.map(messageToJson).toList(growable: false);
+    final response = conversation.messages.map(messageToJson).toList(growable: false);
     logger.info('getMessages took ${sw.elapsed}');
     return response;
   }
@@ -317,7 +319,12 @@ class Realtime {
       logger.info('getConversationDetail took ${sw.elapsed}');
       throw RpcException(HttpStatus.notFound, 'Conversation not found', data: <String, dynamic>{'id': conversationId});
     }
+    if (!conversation.users.contains(_user.data)) {
+      throw RpcException(HttpStatus.unauthorized, 'Not authorized');
+    }
+
     final response = conversation?.toJson();
+    response['messages'] = conversation.messages.map((message) => messageToJson(message)).toList();
     logger.info('getConversationDetail took ${sw.elapsed}');
     return response;
   }

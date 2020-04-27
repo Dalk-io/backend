@@ -65,9 +65,12 @@ class AuthService {
     final accountData = await _accountRpcs.getAccountById.request(tokenData.accountId);
     final projectsData = await _projectRpcs.getProjectById.request(accountData.projectId);
     final response = IsLoggedDataResponse(tokenData.token, accountData.copyWith(password: null, projectId: null), projectsData.copyWith(id: null));
-    return Response(
-      HttpStatus.ok,
-      body: json.encode(response.toJson()),
+    return Response.ok(
+      json.encode(response.toJson()),
+      headers: {
+        HttpHeaders.contentTypeHeader: ContentType.json.toString(),
+        HttpHeaders.serverHeader: null,
+      },
     );
   }
 
