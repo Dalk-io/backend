@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:backend/backend.dart';
 import 'package:backend/src/data/conversation/conversation.dart';
 import 'package:backend/src/data/message/message.dart';
+import 'package:backend/src/data/project/project.dart';
 import 'package:backend/src/data/user/user.dart';
 import 'package:backend/src/models/user.dart';
 import 'package:backend/src/rpc/conversation/get_conversation_by_id.dart';
@@ -21,6 +22,7 @@ import 'package:backend/src/rpc/message/save_message.dart';
 import 'package:backend/src/rpc/message/update_message_status.dart';
 import 'package:backend/src/rpc/messages/get_messages_for_conversation.dart';
 import 'package:backend/src/rpc/user/parameters.dart';
+import 'package:backend/src/utils/get_group_limitation_from_subscription.dart';
 import 'package:backend/src/utils/message_to_json.dart';
 import 'package:crypto/crypto.dart';
 import 'package:http/io_client.dart';
@@ -51,7 +53,7 @@ class Realtime {
   final GetNumberOfMessageForConversation getNumberOfMessageForConversation;
   final SaveMessage saveMessage;
   final GetMessageById getMessageById;
-  final UpdateMessageStatus _updateMessageStatus;
+  final UpdateMessageStatus updateMessageStatusRpc;
   final GetProjectByKey getProjectByKey;
   final UserRpcs userRpcs;
 
@@ -73,7 +75,7 @@ class Realtime {
     this.getConversationsForUser,
     this.saveMessage,
     this.getMessageById,
-    this._updateMessageStatus,
+    this.updateMessageStatusRpc,
     this.getMessagesForConversation,
     this.getProjectByKey,
     this.userRpcs, {
@@ -237,7 +239,10 @@ class Realtime {
       }
     }
     final project = await getProjectByKey.request(projectKey);
-    if (project.groupLimitation != -1 && to.length + 1 > project.groupLimitation) {
+    final isDevelopment = project.development.key == projectKey;
+    final groupLimitation = groupLimitationFromSubscription(project.subscriptionType);
+    final exceedGroupLimitation = groupLimitation < to.length;
+    if (!isDevelopment && exceedGroupLimitation) {
       throw RpcException(
         HttpStatus.unauthorized,
         'Group conversation limit',
@@ -345,6 +350,9 @@ class Realtime {
     if (_user == null) {
       throw RpcException(HttpStatus.unauthorized, 'Not authorized');
     }
+    if (!conversation.users.contains(_user.data)) {
+      throw RpcException(HttpStatus.unauthorized, 'Not authorized');
+    }
     final others = conversation.users.where((user) => user.id != _user.data.id);
     final messageStatus = <MessageStatusByUserData>[
       MessageStatusByUserData(_user.data.id, MessageStatus.seen),
@@ -377,8 +385,10 @@ class Realtime {
       }
     }
     final project = await getProjectByKey.request(projectKey);
+    final isDevelopment = projectKey == project.development.key;
     final _projectInformation = projectKey == project.production?.key ? project.production : project.development;
-    if (_projectInformation.webHook != null) {
+    final canUseWebHook = project.subscriptionType == SubscriptionType.complete && _projectInformation.webHook != null;
+    if ((isDevelopment && _projectInformation.webHook != null) || canUseWebHook) {
       runZoned(
         () {
           _httpClient.post(_projectInformation.webHook, body: json.encode(messageJson));
@@ -419,7 +429,7 @@ class Realtime {
       userMessageStatus,
     ];
     logger.fine('new status $newStatusDetails');
-    message = await _updateMessageStatus.request(UpdateMessageStatusParameters(projectKey, message.conversationId, messageId, newStatusDetails));
+    message = await updateMessageStatusRpc.request(UpdateMessageStatusParameters(projectKey, message.conversationId, messageId, newStatusDetails));
     final conversation = await getConversationById.request(GetConversationByIdParameters(projectKey, message.conversationId));
     final others = _connectedUsers.where((user) => conversation.users.contains(user.data)).where((user) => user.data.id != _user.data.id);
     final connectedOthers = [

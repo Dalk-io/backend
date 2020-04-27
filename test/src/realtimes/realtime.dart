@@ -38,12 +38,14 @@ Realtime initRealtime(ProjectsData projectsData) {
   final getMessagesForConversation = GetMessagesForConversationMock();
   final getProjectByKey = GetProjectByKeyMock();
 
-  when(getProjectByKey.request(projectsData.development.key)).thenAnswer((_) async => projectsData);
+  final key = projectsData.production?.key ?? projectsData.development.key;
+
+  when(getProjectByKey.request(key)).thenAnswer((_) async => projectsData);
 
   final randomMock = Random(1);
 
   return Realtime(
-    projectsData.development.key,
+    key,
     updateConversationSubjectAndAvatar,
     getConversationById,
     saveConversation,
