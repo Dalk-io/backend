@@ -116,7 +116,13 @@ class ProjectService {
       updatedProjectData.production?.isSecure,
       updatedProjectData.development.isSecure,
     ));
-    return Response.ok(null);
+    return Response.ok(
+      null,
+      headers: {
+        HttpHeaders.contentTypeHeader: ContentType.json.toString(),
+        HttpHeaders.serverHeader: null,
+      },
+    );
   }
 
   @Route.get('/<projectKey>/conversations')

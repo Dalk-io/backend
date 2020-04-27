@@ -25,6 +25,7 @@ jobs:
       - name: Connect to staging server, build, compile and launch
         run: |
           ssh root@51.15.141.25 bash << 'ENDSSH'
+            source /root/.bashrc
             cd backend
             killall main.exe || echo "Process was not running."
             killall dart || echo "Process was not running."
