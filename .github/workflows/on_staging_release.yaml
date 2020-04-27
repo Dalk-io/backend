@@ -25,7 +25,6 @@ jobs:
       - name: Connect to staging server, build, compile and launch
         run: |
           ssh root@51.15.141.25 bash << 'ENDSSH'
-            source /root/.bashrc
             cd backend
             killall main.exe || echo "Process was not running."
             killall dart || echo "Process was not running."
@@ -33,5 +32,5 @@ jobs:
             /usr/lib/dart/bin/pub run build_runner build --delete-conflicting-outputs
             /usr/lib/dart/bin/dart2native bin/main.dart
             cd ..
-            nohup backend/bin/main.exe >> backend.log 2>&1 &
+            export USE_SSL=true nohup backend/bin/main.exe >> backend.log 2>&1 &
           ENDSSH
