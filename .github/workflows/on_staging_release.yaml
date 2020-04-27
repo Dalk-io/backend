@@ -21,16 +21,16 @@ jobs:
       - name: Create backend folder
         run: ssh root@51.15.141.25 'mkdir backend'
       - name: Upload backend files
-        run: scp -r bin lib pubspec.yaml pubspec.lock root@51.15.141.25:/root/backend
+        run: scp -r bin lib pubspec.yaml pubspec.lock scripts/ root@51.15.141.25:/root/backend
       - name: Connect to staging server, build, compile and launch
         run: |
-          ssh root@51.15.141.25 /bin/bash << EOF
+          ssh root@51.15.141.25 bash << 'ENDSSH'
             cd backend
             killall main.exe || echo "Process was not running."
+            killall dart || echo "Process was not running."
             /usr/lib/dart/bin/pub get
-            /usr/lib/dart/bin/pub run build_runner build
+            /usr/lib/dart/bin/pub run build_runner build --delete-conflicting-outputs
             /usr/lib/dart/bin/dart2native bin/main.dart
             cd ..
-            ./backend/bin/main.exe >> backend.log &
-            exit 0
-          EOF
+            nohup backend/bin/main.exe >> backend.log 2>&1 &
+          ENDSSH
