@@ -17,9 +17,9 @@ jobs:
           name: id_rsa
           known_hosts: ${{ secrets.KNOWN_HOSTS }}
       - name: Upload backend binary
-        run: ssh root@51.15.141.25 /bin/bash 'rm -rf backend'
+        run: ssh root@51.15.141.25 'rm -rf backend'
       - name: Upload backend binary
-        run: ssh root@51.15.141.25 /bin/bash 'mkdir backend'
+        run: ssh root@51.15.141.25 'mkdir backend'
       - name: Upload backend binary
         run: scp -r bin lib pubspec.yaml pubspec.lock root@51.15.141.25:/root/backend
       - name: Connect to staging server, build, compile and launch
