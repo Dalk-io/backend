@@ -26,10 +26,10 @@ jobs:
         run: dart2native bin/main.dart
       - name: Upload backend binary
         run: |
-          scp -i .ssh/id_rsa -r bin/main.exe root@51.15.141.25:/root/bin
+          scp -i ~/.ssh/id_rsa -r bin/main.exe root@51.15.141.25:/root/bin
       - name: Launch
         run: |
-          ssh -i .ssh/id_rsa root@51.15.141.25 /bin/bash << EOF
+          ssh -i ~/.ssh/id_rsa root@51.15.141.25 /bin/bash << EOF
             killall main.exe || echo "Process was not running."
             bin/main.exe >> backend.log &
           EOF
