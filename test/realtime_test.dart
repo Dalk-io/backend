@@ -18,7 +18,7 @@ import 'src/mocks/peer.dart';
 import 'src/realtimes/realtime.dart';
 
 void main() {
-  final starterProject = ProjectsData(ProjectEnvironmentData('dev-key', '12345'), SubscriptionType.starter);
+  final starterProject = ProjectsData(ProjectEnvironmentData('dev-key', '12345'));
   // final productionSecureStarterWithProject = ProjectsData(
   //   ProjectEnvironmentData('dev-starter-key', '12345', isSecure: true),
   //   SubscriptionType.starter,
@@ -46,7 +46,7 @@ void main() {
     Realtime realtime;
 
     setUpAll(() {
-      realtime = initRealtime(ProjectsData(ProjectEnvironmentData('dev-key', 'dev-secret'), SubscriptionType.starter));
+      realtime = initRealtime(ProjectsData(ProjectEnvironmentData('dev-key', 'dev-secret')));
     });
 
     group('register user', () {
@@ -62,7 +62,7 @@ void main() {
         Realtime realtime;
 
         setUpAll(() {
-          realtime = initRealtime(ProjectsData(ProjectEnvironmentData('dev-key', 'dev-secret', isSecure: true), SubscriptionType.starter));
+          realtime = initRealtime(ProjectsData(ProjectEnvironmentData('dev-key', 'dev-secret', isSecure: true)));
         });
 
         test('valid signature', () async {
@@ -817,7 +817,7 @@ void main() {
       });
 
       test('with webHook == null', () async {
-        final realtime = initRealtime(ProjectsData(ProjectEnvironmentData('add-peer-key', '12345'), SubscriptionType.starter));
+        final realtime = initRealtime(ProjectsData(ProjectEnvironmentData('add-peer-key', '12345')));
         when(realtime.getConversationById.request(any)).thenAnswer((_) async => ConversationData(
               id: '1',
               admins: [UserData('1')],
@@ -852,7 +852,6 @@ void main() {
       test('with webHook != null', () async {
         final realtime = initRealtime(ProjectsData(
           ProjectEnvironmentData('add-peer-key', '12345', webHook: 'test.fr'),
-          SubscriptionType.starter,
         ));
         when(realtime.getConversationById.request(any)).thenAnswer((_) async => ConversationData(
               id: '1',
@@ -1006,15 +1005,14 @@ void main() {
       starter = initRealtime(
         ProjectsData(
           ProjectEnvironmentData('dev-key', 'dev-secret'),
-          SubscriptionType.starter,
           production: ProjectEnvironmentData('prod-key', 'prod-secret', isSecure: true, webHook: 'test.fr'),
         ),
       );
       complete = initRealtime(
         ProjectsData(
           ProjectEnvironmentData('dev-key', 'dev-secret'),
-          SubscriptionType.complete,
           production: ProjectEnvironmentData('prod-key', 'prod-secret', isSecure: true, webHook: 'test.fr'),
+          subscriptionType: SubscriptionType.complete,
         ),
       );
     });

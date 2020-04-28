@@ -88,21 +88,9 @@ class AuthService {
   @Route.post('/register')
   Future<Response> register(Request request) async {
     final body = (json.decode(await request.readAsString()) as Map).cast<String, String>();
-    final checkParametersResponse = checkRequestParameters(['lastName', 'firstName', 'email', 'password', 'subscriptionType'], body);
+    final checkParametersResponse = checkRequestParameters(['lastName', 'firstName', 'email', 'password'], body);
     if (checkParametersResponse != null) {
       return checkParametersResponse;
-    }
-    if (!['starter', 'complete'].contains(body['subscriptionType'])) {
-      return Response(
-        HttpStatus.badRequest,
-        body: json.encode({
-          'message': 'Bad required parameters',
-          'data': 'Supported value are [starter|complete]',
-        }),
-        headers: {
-          HttpHeaders.contentTypeHeader: ContentType.json.toString(),
-        },
-      );
     }
     final registerData = RegisterDataRequest.fromJson(body);
     final password = registerData.password;
@@ -140,7 +128,7 @@ class AuthService {
         })))
         .toString();
     final developmentSecret = 'dev_$developmentSecretHash';
-    final project = ProjectsData(ProjectEnvironmentData(developmentKey, developmentSecret), SubscriptionType.starter);
+    final project = ProjectsData(ProjectEnvironmentData(developmentKey, developmentSecret));
     final projectId = await _projectRpcs.saveProject.request(project);
     final accountId = await _accountRpcs.saveAccount.request(SaveAccountParameters(firstName, lastName, email, encryptedPassword, projectId));
     await _tokenRpcs.saveToken.request(SaveTokenParameters(token, accountId, DateTime.now().toUtc()));

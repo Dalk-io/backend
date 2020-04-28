@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - "*-production.*"
+      - "*-production"
 
 jobs:
   build_and_deploy_to_production:

@@ -19,14 +19,15 @@ abstract class ProjectEnvironmentData with _$ProjectEnvironmentData {
 enum SubscriptionType {
   starter,
   complete,
+  none,
 }
 
 @freezed
 abstract class ProjectsData with _$ProjectsData {
   @JsonSerializable(explicitToJson: true)
   const factory ProjectsData(
-    ProjectEnvironmentData development,
-    SubscriptionType subscriptionType, {
+    ProjectEnvironmentData development, {
+    @Default(SubscriptionType.none) SubscriptionType subscriptionType,
     @nullable @JsonKey(includeIfNull: false) int id,
     @nullable @JsonKey(includeIfNull: false) ProjectEnvironmentData production,
     @Default(5) int groupLimitation,

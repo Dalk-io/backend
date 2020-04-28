@@ -6,6 +6,8 @@ int groupLimitationFromSubscription(SubscriptionType subscriptionType) {
       return 100;
     case SubscriptionType.starter:
       return 5;
+    case SubscriptionType.none:
+      return -1;
   }
   return 5;
 }
