@@ -120,7 +120,6 @@ class ProjectService {
       null,
       headers: {
         HttpHeaders.contentTypeHeader: ContentType.json.toString(),
-        HttpHeaders.serverHeader: null,
       },
     );
   }
@@ -148,7 +147,6 @@ class ProjectService {
       json.encode(jsonResponse),
       headers: {
         HttpHeaders.contentTypeHeader: ContentType.json.toString(),
-        HttpHeaders.serverHeader: null,
       },
     );
   }
@@ -184,7 +182,6 @@ class ProjectService {
       ),
       headers: {
         HttpHeaders.contentTypeHeader: ContentType.json.toString(),
-        HttpHeaders.serverHeader: null,
       },
     );
   }
@@ -208,7 +205,6 @@ class ProjectService {
       json.encode(messages.map((message) => messageToJson(message, filter: false)).toList()),
       headers: {
         HttpHeaders.contentTypeHeader: ContentType.json.toString(),
-        HttpHeaders.serverHeader: null,
       },
     );
   }

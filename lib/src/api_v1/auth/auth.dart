@@ -50,7 +50,6 @@ class AuthService {
       json.encode(response.toJson()),
       headers: {
         HttpHeaders.contentTypeHeader: ContentType.json.toString(),
-        HttpHeaders.serverHeader: null,
       },
     );
   }
@@ -72,7 +71,6 @@ class AuthService {
       json.encode(response.toJson()),
       headers: {
         HttpHeaders.contentTypeHeader: ContentType.json.toString(),
-        HttpHeaders.serverHeader: null,
       },
     );
   }
@@ -103,7 +101,6 @@ class AuthService {
         }),
         headers: {
           HttpHeaders.contentTypeHeader: ContentType.json.toString(),
-          HttpHeaders.serverHeader: null,
         },
       );
     }
@@ -118,7 +115,6 @@ class AuthService {
         }),
         headers: {
           HttpHeaders.contentTypeHeader: ContentType.json.toString(),
-          HttpHeaders.serverHeader: null,
         },
       );
     }
@@ -154,7 +150,6 @@ class AuthService {
       body: json.encode(response.toJson()),
       headers: {
         HttpHeaders.contentTypeHeader: ContentType.json.toString(),
-        HttpHeaders.serverHeader: null,
       },
     );
   }

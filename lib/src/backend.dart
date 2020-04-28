@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:backend/src/api_v1/api.dart';
+import 'package:backend/src/middlewares/clean_response.dart';
 import 'package:backend/src/middlewares/cors.dart';
 import 'package:backend/src/rpc/rpcs.dart';
 import 'package:logging/logging.dart';
@@ -19,9 +22,10 @@ class Backend {
   Handler get handler => Pipeline()
       .addMiddleware(dalkCorsMiddleware({
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Request-Method': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+        'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': '${HttpHeaders.contentTypeHeader}, ${HttpHeaders.authorizationHeader}'
       }))
+      .addMiddleware(dalkCleanResponseMiddleware)
       .addHandler(_$BackendRouter(this).handler);
 
   @Route.mount('/v1/')
