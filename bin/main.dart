@@ -16,9 +16,6 @@ void main(List<String> arguments) async {
   final databaseName = Platform.environment['DATABASE_NAME'];
   final databaseUsername = Platform.environment['DATABASE_USERNAME'];
   final databasePassword = Platform.environment['DATABASE_PASSWORD'];
-  print(databaseHost);
-  print(databasePort);
-  print(databaseName);
 
   final postgresPool = PgPool(
     PgEndpoint(
