@@ -33,5 +33,5 @@ jobs:
             /usr/lib/dart/bin/pub run build_runner build --delete-conflicting-outputs
             /usr/lib/dart/bin/dart2native bin/main.dart
             cd ..
-            USE_SSL=true nohup backend/bin/main.exe >> backend.log 2>&1 &
+            USE_SSL=true DATABASE_HOST=${{ PRODUCTION_DATABASE_HOST }} DATABASE_PORT=${{ PRODUCTION_DATABASE_PORT }} DATABASE_NAME=${{ DEVELOPMENT_DATABASE_NAME }} DATABASE_USERNAME=${{ PRODUCTION_DATABASE_USERNAME }} DATABASE_PASSWORD=${{ PRODUCTION_DATABASE_PASSWORD }} nohup backend/bin/main.exe >> backend.log 2>&1 &
           ENDSSH

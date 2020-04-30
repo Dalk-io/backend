@@ -162,6 +162,7 @@ void main() {
           realtime.addPeer(peer);
           await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
           final conversations = await realtime.getConversations(peer);
+          print(conversations);
           expect(conversations, isNotEmpty);
           expect(conversations.length, 1);
           expect(
@@ -180,7 +181,7 @@ void main() {
                       'id': '1',
                       'senderId': '1',
                       'text': 'Hello',
-                      'timestamp': '2020-01-01T14:30:00.000Z',
+                      'createdAt': '2020-01-01T14:30:00.000Z',
                       'statusDetails': [
                         {'id': '2', 'status': 'sent'}
                       ],
@@ -351,7 +352,7 @@ void main() {
                   'id': '1',
                   'senderId': '1',
                   'text': 'Hello world',
-                  'timestamp': '2020-01-01T14:30:00.000Z',
+                  'createdAt': '2020-01-01T14:30:00.000Z',
                   'statusDetails': [
                     {'id': '2', 'status': 'sent'}
                   ],
@@ -590,7 +591,7 @@ void main() {
                 'id': '1',
                 'senderId': '1',
                 'text': 'Hello world',
-                'timestamp': '2020-01-01T14:30:00.000Z',
+                'createdAt': '2020-01-01T14:30:00.000Z',
                 'statusDetails': [
                   {'id': '2', 'status': 'sent'}
                 ],
@@ -650,7 +651,7 @@ void main() {
                   'id': '1',
                   'senderId': '1',
                   'text': 'Hello world',
-                  'timestamp': '2020-01-01T14:30:00.000Z',
+                  'createdAt': '2020-01-01T14:30:00.000Z',
                   'statusDetails': [
                     {'id': '2', 'status': 'sent'}
                   ],
@@ -738,7 +739,7 @@ void main() {
               'id': '4',
               'senderId': '1',
               'text': 'Hello world',
-              'timestamp': '2020-01-01T14:30:00.000Z',
+              'createdAt': '2020-01-01T14:30:00.000Z',
               'statusDetails': [
                 {'id': '2', 'status': 'sent'},
               ],
@@ -767,7 +768,7 @@ void main() {
               'id': '87',
               'senderId': '1',
               'text': 'Hello world',
-              'timestamp': '2020-01-01T14:30:00.000Z',
+              'createdAt': '2020-01-01T14:30:00.000Z',
               'status': 'sent',
               'statusDetails': [
                 {'id': '2', 'status': 'sent'},
@@ -804,7 +805,7 @@ void main() {
               'id': '95',
               'senderId': '1',
               'text': 'Hello world',
-              'timestamp': '2020-01-01T14:30:00.000Z',
+              'createdAt': '2020-01-01T14:30:00.000Z',
               'status': 'sent',
               'statusDetails': [
                 {'id': '2', 'status': 'sent'},
@@ -839,7 +840,7 @@ void main() {
             'id': '4',
             'senderId': '1',
             'text': 'Hello world',
-            'timestamp': '2020-01-01T14:30:00.000Z',
+            'createdAt': '2020-01-01T14:30:00.000Z',
             'status': 'sent',
             'statusDetails': [
               {'id': '2', 'status': 'sent'},
@@ -874,7 +875,7 @@ void main() {
             'id': '4',
             'senderId': '1',
             'text': 'Hello world',
-            'timestamp': '2020-01-01T14:30:00.000Z',
+            'createdAt': '2020-01-01T14:30:00.000Z',
             'status': 'sent',
             'statusDetails': [
               {'id': '2', 'status': 'sent'},
@@ -927,7 +928,7 @@ void main() {
           'id': '1',
           'senderId': '1',
           'text': 'Hello world',
-          'timestamp': '2020-01-01T14:30:00.000Z',
+          'createdAt': '2020-01-01T14:30:00.000Z',
           'status': 'seen',
           'statusDetails': [
             {'id': '2', 'status': 'seen'}
@@ -1081,7 +1082,7 @@ void main() {
               'id': '4',
               'senderId': '1',
               'text': 'Hello world',
-              'timestamp': '2020-01-01T14:30:00.000Z',
+              'createdAt': '2020-01-01T14:30:00.000Z',
               'status': 'sent',
               'statusDetails': [
                 {'id': '2', 'status': 'sent'},
@@ -1119,7 +1120,7 @@ void main() {
               'id': '4',
               'senderId': '1',
               'text': 'Hello world',
-              'timestamp': '2020-01-01T14:30:00.000Z',
+              'createdAt': '2020-01-01T14:30:00.000Z',
               'status': 'sent',
               'statusDetails': [
                 {'id': '2', 'status': 'sent'},

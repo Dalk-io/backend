@@ -3,11 +3,11 @@ import 'package:postgres_pool/postgres_pool.dart';
 void main() async {
   final pg = PgPool(
     PgEndpoint(
-      host: '51.159.26.58',
-      port: 10480,
-      database: 'rdb',
+      host: '51.159.24.51',
+      port: 45107,
+      database: 'staging',
       username: 'dalk',
-      password: 'MmA1@<s|cV#"\'0BX}[zJ4',
+      password: 'Lg-)bTvEf=s2r}>yz2k@O',
       requireSsl: true,
     ),
     settings: PgPoolSettings()..concurrency = 10,
@@ -37,6 +37,6 @@ void main() async {
   await pg.execute(
       'CREATE TABLE IF NOT EXISTS conversations (projectId TEXT NOT NULL, id TEXT NOT NULL, subject TEXT, avatar TEXT, admins json NOT NULL, users json NOT NULL, lastUpdate TIMESTAMPTZ NOT NULL, isGroup boolean NOT NULL);');
   await pg.execute(
-      'CREATE TABLE IF NOT EXISTS messages (projectId TEXT NOT NULL, id TEXT PRIMARY KEY, conversationId TEXT NOT NULL, senderId TEXT NOT NULL, text TEXT, timestamp TIMESTAMPTZ NOT NULL, statusDetails json NOT NULL);');
+      'CREATE TABLE IF NOT EXISTS messages (projectId TEXT NOT NULL, id TEXT PRIMARY KEY, conversationId TEXT NOT NULL, senderId TEXT NOT NULL, text TEXT, createdAt TIMESTAMPTZ NOT NULL, statusDetails json NOT NULL, modifiedAt TIMESTAMPTZ, metadata json);');
   await pg.close();
 }

@@ -339,7 +339,17 @@ class Realtime {
     final logger = Logger('${_logger.name}.sendMessage');
     final conversationId = parameters['conversationId'].asString;
     final text = parameters['text'].asStringOr(null);
+    final dynamic metadata = parameters['metadata'].valueOr(null);
     logger.fine('send message parameters $conversationId $text');
+    if (metadata != null) {
+      final metadataSize = json.encode(metadata).length;
+      if (metadataSize > 5000) {
+        throw RpcException(HttpStatus.badRequest, 'Metadata is too big', data: {
+          'maxSize': 5000,
+          'currentSize': metadataSize,
+        });
+      }
+    }
     final conversation = await getConversationById.request(GetConversationByIdParameters(projectKey, conversationId));
     if (conversation == null) {
       logger.warning('Conversation $conversationId not found');
@@ -385,10 +395,10 @@ class Realtime {
       }
     }
     final project = await getProjectByKey.request(projectKey);
-    final isDevelopment = projectKey == project.development.key;
     final _projectInformation = projectKey == project.production?.key ? project.production : project.development;
-    final canUseWebHook = project.subscriptionType == SubscriptionType.complete && _projectInformation.webHook != null;
-    if ((isDevelopment && _projectInformation.webHook != null) || canUseWebHook) {
+    final isDevelopment = projectKey == project.development.key;
+    final canUseWebHook = project.subscriptionType == SubscriptionType.complete;
+    if ((isDevelopment || canUseWebHook) && _projectInformation.webHook != null) {
       runZoned(
         () {
           _httpClient.post(_projectInformation.webHook, body: json.encode(messageJson));

@@ -13,11 +13,9 @@ void main() async {
     settings: PgPoolSettings()..concurrency = 10,
   );
 
-  // await pg.execute('DROP TABLE accounts;');
-  // await pg.execute('DROP TABLE tokens;');
-  // await pg.execute('DROP TABLE users;');
-  // await pg.execute('DROP TABLE projects');
-  // await pg.execute('DROP TABLE conversations;');
-  await pg.execute('DROP TABLE messages;');
+  await pg.execute('ALTER TABLE messages ADD COLUMN metadata json;');
+  await pg.execute('ALTER TABLE messages ADD COLUMN modifiedAt TIMESTAMPTZ;');
+  await pg.execute('ALTER TABLE messages RENAME COLUMN timestamp TO createdAt;');
+
   await pg.close();
 }

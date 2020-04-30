@@ -71,7 +71,9 @@ void main() {
             json.encode([
               {'id': '2', 'status': MessageStatus.seen.index},
               {'id': '2', 'status': MessageStatus.sent.index}
-            ])
+            ]),
+            null,
+            null,
           ]
         ]);
     final getUserById = GetUserByIdMock();

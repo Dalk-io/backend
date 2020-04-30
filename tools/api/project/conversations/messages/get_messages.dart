@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:backend/src/utils/pretty_print_json.dart';
+import 'package:backend/src/utils/pretty_json.dart';
 import 'package:http/http.dart' as http;
 
 void main(List<String> arguments) async {

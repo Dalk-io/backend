@@ -14,9 +14,11 @@ abstract class MessageData with _$MessageData {
     @nullable @JsonKey(includeIfNull: false) String conversationId,
     String senderId,
     String text,
-    DateTime timestamp,
-    List<MessageStatusByUserData> statusDetails,
-  ) = _MessageData;
+    DateTime createdAt,
+    List<MessageStatusByUserData> statusDetails, {
+    @JsonKey(includeIfNull: false) dynamic metadata,
+    @JsonKey(includeIfNull: false) DateTime modifiedAt,
+  }) = _MessageData;
 
   factory MessageData.fromJson(Map<String, dynamic> json) => _$MessageDataFromJson(json);
 
@@ -34,6 +36,8 @@ abstract class MessageData with _$MessageData {
       data[4] as String,
       data[5] as DateTime,
       statusDetails,
+      metadata: json.decode(data[6] as String),
+      modifiedAt: data[8] as DateTime,
     );
   }
 }

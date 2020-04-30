@@ -17,9 +17,9 @@ abstract class ProjectEnvironmentData with _$ProjectEnvironmentData {
 }
 
 enum SubscriptionType {
+  none,
   starter,
   complete,
-  none,
 }
 
 @freezed

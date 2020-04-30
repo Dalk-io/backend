@@ -11,13 +11,22 @@ void main(List<String> arguments) async {
   Logger.root.onRecord.listen((record) => print('${record.time.toIso8601String()} ${record.level.name} ${record.loggerName}: ${record.message}'));
   final _logger = Logger('main');
 
+  final databaseHost = Platform.environment['DATABASE_HOST'];
+  final databasePort = int.tryParse(Platform.environment['DATABASE_PORT']);
+  final databaseName = Platform.environment['DATABASE_NAME'];
+  final databaseUsername = Platform.environment['DATABASE_USERNAME'];
+  final databasePassword = Platform.environment['DATABASE_PASSWORD'];
+  print(databaseHost);
+  print(databasePort);
+  print(databaseName);
+
   final postgresPool = PgPool(
     PgEndpoint(
-      host: '51.159.26.58',
-      port: 10480,
-      database: 'rdb',
-      username: 'dalk',
-      password: 'MmA1@<s|cV#"\'0BX}[zJ4',
+      host: databaseHost,
+      port: databasePort,
+      database: databaseName,
+      username: databaseUsername,
+      password: databasePassword,
       requireSsl: true,
     ),
     settings: PgPoolSettings()

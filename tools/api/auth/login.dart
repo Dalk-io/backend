@@ -10,5 +10,6 @@ void main() async {
           'password': 'tata-fr-dalk',
         },
       ));
+  print(response.statusCode);
   print(response.body);
 }
