@@ -63,13 +63,13 @@ class PaddleService {
         'positionalArgs': [Random.secure().nextInt(20000)]
       },
     );
-    final productionKey = 'dev_$productionKeyUuid';
+    final productionKey = 'prod_$productionKeyUuid';
     final productionSecretHash = sha512
         .convert(utf8.encode(uuid.v1(options: <String, dynamic>{
           'positionalArgs': [Random.secure().nextInt(20000)]
         })))
         .toString();
-    final productionSecret = 'dev_$productionSecretHash';
+    final productionSecret = 'prod_$productionSecretHash';
     final production = ProjectEnvironmentData(productionKey, productionSecret);
     await _rpcs.projectRpcs.updateProject.request(project.copyWith(subscriptionType: subscriptionType, production: production));
   }
