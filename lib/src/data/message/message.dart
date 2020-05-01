@@ -28,6 +28,7 @@ abstract class MessageData with _$MessageData {
         .cast<Map<String, dynamic>>()
         .map((status) => MessageStatusByUserData(status['id'] as String, MessageStatus.values[status['status'] as int]))
         .toList();
+    final dynamic metadata = data[6] != null ? json.decode(data[6] as String) : null;
     return MessageData(
       data[0] as String,
       data[1] as String,
@@ -36,7 +37,7 @@ abstract class MessageData with _$MessageData {
       data[4] as String,
       data[5] as DateTime,
       statusDetails,
-      metadata: json.decode(data[6] as String),
+      metadata: metadata,
       modifiedAt: data[8] as DateTime,
     );
   }

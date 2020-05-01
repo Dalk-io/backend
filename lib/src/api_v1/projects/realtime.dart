@@ -370,8 +370,8 @@ class Realtime {
     ];
     final numberOfMessage = await getNumberOfMessageForConversation.request(GetNumberOfMessageForConversationParameter(projectKey, conversationId));
     final id = _messageIdFactory();
-    await saveMessage.request(SaveMessageParameters(id, projectKey, conversationId, _user.data.id, text, messageStatus));
-    final message = MessageData(id, projectKey, conversationId, _user.data.id, text, _dateTimeFactory(), messageStatus);
+    await saveMessage.request(SaveMessageParameters(id, projectKey, conversationId, _user.data.id, text, messageStatus, metadata));
+    final message = MessageData(id, projectKey, conversationId, _user.data.id, text, _dateTimeFactory(), messageStatus, metadata: metadata);
     logger.fine('send message $message');
     final connectedOthers = [
       ..._connectedUsers.where((element) => others.contains(element.data)),

@@ -16,7 +16,8 @@ abstract class GetMessageByIdParameters with _$GetMessageByIdParameters {
 @freezed
 abstract class SaveMessageParameters with _$SaveMessageParameters {
   const factory SaveMessageParameters(
-      String id, String projectId, String conversationId, String senderId, String text, List<MessageStatusByUserData> statusDetails) = _SaveMessageParameters;
+          String id, String projectId, String conversationId, String senderId, String text, List<MessageStatusByUserData> statusDetails, dynamic metadata) =
+      _SaveMessageParameters;
 }
 
 @freezed
