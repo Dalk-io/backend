@@ -250,7 +250,7 @@ class Realtime {
       throw RpcException(
         HttpStatus.unauthorized,
         'Group conversation limit',
-        data: {'groupLimitation': project.groupLimitation, 'groupSize': to.length},
+        data: {'groupLimitation': groupLimitation, 'groupSize': to.length},
       );
     }
     final subject = parameters['subject'].asStringOr(null);

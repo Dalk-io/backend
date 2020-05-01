@@ -30,7 +30,6 @@ abstract class ProjectsData with _$ProjectsData {
     @Default(SubscriptionType.none) SubscriptionType subscriptionType,
     @nullable @JsonKey(includeIfNull: false) int id,
     @nullable @JsonKey(includeIfNull: false) ProjectEnvironmentData production,
-    @Default(5) int groupLimitation,
   }) = _ProjectsData;
 
   factory ProjectsData.fromJson(Map<String, dynamic> json) => _$ProjectsDataFromJson(json);

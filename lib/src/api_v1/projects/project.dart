@@ -8,7 +8,6 @@ import 'package:backend/src/data/project/project.dart';
 import 'package:backend/src/middlewares/check_project_exist.dart';
 import 'package:backend/src/rpc/conversation/parameters.dart';
 import 'package:backend/src/rpc/messages/parameters.dart';
-import 'package:backend/src/rpc/project/parameters.dart';
 import 'package:backend/src/rpc/rpcs.dart';
 import 'package:backend/src/utils/check_token.dart';
 import 'package:backend/src/utils/message_to_json.dart';
@@ -110,13 +109,7 @@ class ProjectService {
       production: production,
       development: development,
     );
-    await _rpcs.projectRpcs.updateProject.request(UpdateProjectParameters(
-      projectData.id,
-      updatedProjectData.production?.webHook,
-      updatedProjectData.development.webHook,
-      updatedProjectData.production?.isSecure,
-      updatedProjectData.development.isSecure,
-    ));
+    await _rpcs.projectRpcs.updateProject.request(updatedProjectData);
     return Response.ok(
       null,
       headers: {
