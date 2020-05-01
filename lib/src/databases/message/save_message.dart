@@ -9,14 +9,14 @@ class SaveMessageToDatabase extends DatabaseEndpoint<SaveMessageParameters> {
       : super(
           pgPool,
           (input) => pgPool.query(
-            'INSERT INTO messages (id, projectId, conversationId, senderId, text, timestamp, statusDetails) VALUES (@id, @projectId, @conversationId, @senderId, @text, @timestamp, @statusDetails);',
+            'INSERT INTO messages (id, projectId, conversationId, senderId, text, createdAt, statusDetails) VALUES (@id, @projectId, @conversationId, @senderId, @text, @createdAt, @statusDetails);',
             substitutionValues: <String, dynamic>{
               'id': input.id,
               'projectId': input.projectId,
               'conversationId': input.conversationId,
               'senderId': input.senderId,
               'text': input.text,
-              'timestamp': DateTime.now().toUtc(),
+              'createdAt': DateTime.now().toUtc(),
               'statusDetails': json.encode(input.statusDetails.map((statusByUser) => {'id': statusByUser.id, 'status': statusByUser.status.index}).toList()),
             },
           ),

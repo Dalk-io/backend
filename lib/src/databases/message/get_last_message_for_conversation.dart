@@ -9,7 +9,7 @@ class GetLastMessageForConversationFromDatabase extends DatabaseEndpoint<GetLast
       : super(
           pgPool,
           (input) => pgPool.query(
-            'SELECT id, projectId, conversationId, senderId, text, timestamp, statusDetails FROM messages WHERE projectId = @projectId AND conversationId = @conversationId ORDER BY timestamp DESC LIMIT 1;',
+            'SELECT id, projectId, conversationId, senderId, text, createdAt, statusDetails FROM messages WHERE projectId = @projectId AND conversationId = @conversationId ORDER BY createdAt DESC LIMIT 1;',
             substitutionValues: <String, String>{
               'projectId': input.projectId,
               'conversationId': input.conversationId,
