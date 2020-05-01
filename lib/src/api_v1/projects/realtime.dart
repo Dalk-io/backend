@@ -54,6 +54,7 @@ class Realtime {
   final SaveMessage saveMessage;
   final GetMessageById getMessageById;
   final UpdateMessageStatus updateMessageStatusRpc;
+  final UpdateMessage updateMessageRpc;
   final GetProjectByKey getProjectByKey;
   final UserRpcs userRpcs;
 
@@ -78,7 +79,8 @@ class Realtime {
     this.updateMessageStatusRpc,
     this.getMessagesForConversation,
     this.getProjectByKey,
-    this.userRpcs, {
+    this.userRpcs,
+    this.updateMessageRpc, {
     DateTimeFactory dateTimeFactory,
     IOClient httpClient,
     MessageIdFactory messageIdFactory,
@@ -115,6 +117,8 @@ class Realtime {
     peer.registerMethod('sendMessage', (Parameters parameters) => sendMessage(parameters, peer));
 
     peer.registerMethod('updateMessageStatus', (Parameters parameters) => updateMessageStatus(parameters, peer));
+
+    peer.registerMethod('updateMessage', (Parameters parameters) => updateMessage(parameters, peer));
 
     peer.registerFallback((parameters) => throw RpcException.methodNotFound(parameters.method));
   }
@@ -439,7 +443,7 @@ class Realtime {
       userMessageStatus,
     ];
     logger.fine('new status $newStatusDetails');
-    message = await updateMessageStatusRpc.request(UpdateMessageStatusParameters(projectKey, message.conversationId, messageId, newStatusDetails));
+    message = await updateMessageStatusRpc.request(UpdateMessageStatusParameters(projectKey, message.conversationId, message.id, newStatusDetails));
     final conversation = await getConversationById.request(GetConversationByIdParameters(projectKey, message.conversationId));
     final others = _connectedUsers.where((user) => conversation.users.contains(user.data)).where((user) => user.data.id != _user.data.id);
     final connectedOthers = [
@@ -451,5 +455,40 @@ class Realtime {
       other.updateMessageStatus(message.conversationId, messageToJson(message));
     }
     logger.info('updateMessageStatus took ${sw.elapsed}');
+  }
+
+  Future<Map<String, dynamic>> updateMessage(Parameters parameters, Peer peer) async {
+    final sw = Stopwatch()..start();
+    final logger = Logger('${_logger.name}.updateMessageStatus');
+    final messageId = parameters['id'].asString;
+    final dynamic metadata = parameters['metadata'].valueOr(null);
+    final text = parameters['text'].asStringOr('');
+    var message = await getMessageById.request(GetMessageByIdParameters(projectKey, messageId));
+    if (message == null) {
+      logger.warning('Message $messageId not found');
+      logger.info('updateMessage took ${sw.elapsed}');
+      throw RpcException(HttpStatus.notFound, 'Message not found', data: {'id': messageId});
+    }
+    final _user = _connectedUsers.firstWhere((element) => element.peer == peer, orElse: () => null);
+    if (_user == null || !message.statusDetails.map((status) => status.id).contains(_user.data.id)) {
+      throw RpcException(HttpStatus.unauthorized, 'Not authorized');
+    }
+    if (text != message.text && message.senderId != _user.data.id) {
+      throw RpcException(HttpStatus.unauthorized, 'Not authorized');
+    }
+    message = await updateMessageRpc.request(message.copyWith(text: text, metadata: metadata));
+    final conversation = await getConversationById.request(GetConversationByIdParameters(projectKey, message.conversationId));
+    final others = _connectedUsers.where((user) => conversation.users.contains(_user.data)).where((user) => user.data.id != _user.data.id);
+    final connectedOthers = [
+      ...others,
+      ..._connectedUsers.where((element) => element.data.id == _user.data.id).where((element) => element.peer != _user.peer),
+    ];
+    final messageJson = messageToJson(message);
+    for (final other in connectedOthers) {
+      logger.info('update message $message');
+      other.updateMessage(message.conversationId, messageJson);
+    }
+    logger.info('updateMessage took ${sw.elapsed}');
+    return messageJson;
   }
 }

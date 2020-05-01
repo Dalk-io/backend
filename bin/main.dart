@@ -106,12 +106,14 @@ ToDatabase generateToDatabase(PgPool pgPool) => ToDatabase(
       UpdateUserByIdFromDatabase(pgPool),
       UpdateProjectToDatabase(pgPool),
       UpdateAccountToDatabase(pgPool),
+      UpdateMessageToDatabase(pgPool),
     );
 
 MessageRpcs generateMessageRpcs(FromDatabase from, ToDatabase to) => MessageRpcs(
       GetMessageById(from.getMessageByIdFromDatabase),
       SaveMessage(to.saveMessageToDatabase),
       UpdateMessageStatus(to.updateMessageStatusToDatabase),
+      UpdateMessage(to.updateMessageToDatabase),
     );
 
 MessagesRpcs generateMessagesRpcs(FromDatabase from, ToDatabase to) => MessagesRpcs(GetMessagesForConversation(from.getMessagesForConversationFromDatabase));

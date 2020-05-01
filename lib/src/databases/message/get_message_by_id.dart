@@ -7,7 +7,7 @@ class GetMessageByIdFromDatabase extends DatabaseEndpoint<GetMessageByIdParamete
       : super(
           pgPool,
           (input) => pgPool.query(
-            'SELECT projectId, id, conversationId, senderId, text, createdAt, statusDetails, metadata, modifiedAt FROM messages WHERE projectId = @projectId AND id = @messageId',
+            'SELECT id, projectId, conversationId, senderId, text, createdAt, statusDetails, metadata, modifiedAt FROM messages WHERE projectId = @projectId AND id = @messageId',
             substitutionValues: <String, dynamic>{
               'messageId': input.messageId,
               'projectId': input.projectId,

@@ -996,6 +996,71 @@ void main() {
         }
       });
     });
+
+    group('update message', () {
+      test('message not found', () async {
+        when(realtime.getMessageById.request(any)).thenAnswer((_) async => null);
+        final peer = PeerMock();
+        realtime.addPeer(peer);
+        await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+        try {
+          await realtime.updateMessage(Parameters('updateMessage', {'id': '1', 'text': 'update text'}), peer);
+        } on RpcException catch (e) {
+          expect(e.code, HttpStatus.notFound);
+        }
+      });
+
+      test('update text when i am not the sender', () async {
+        when(realtime.getMessageById.request(any)).thenAnswer(
+          (_) async => MessageData('1', '1', '1', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30),
+              [MessageStatusByUserData('1', MessageStatus.seen), MessageStatusByUserData('2', MessageStatus.sent)]),
+        );
+        final peer = PeerMock();
+        realtime.addPeer(peer);
+        await realtime.registerUser(Parameters('registerUser', {'id': '5'}), peer);
+        try {
+          await realtime.updateMessage(Parameters('updateMessage', {'id': '1', 'text': 'updated text'}), peer);
+          expect(true, isFalse);
+        } on RpcException catch (e) {
+          expect(e.code, HttpStatus.unauthorized);
+        }
+      });
+
+      test('update text', () async {
+        when(realtime.getMessageById.request(any)).thenAnswer(
+          (_) async => MessageData('1', '1', '1', '1', 'Hello world', DateTime.utc(2020, 01, 01, 14, 30),
+              [MessageStatusByUserData('1', MessageStatus.seen), MessageStatusByUserData('2', MessageStatus.sent)]),
+        );
+        when(realtime.updateMessageRpc.request(any)).thenAnswer(
+          (_) async => MessageData('1', '1', '1', '1', 'updated text', DateTime.utc(2020, 01, 01, 14, 30),
+              [MessageStatusByUserData('1', MessageStatus.seen), MessageStatusByUserData('2', MessageStatus.sent)],
+              modifiedAt: DateTime(2020, 01, 01, 14, 30)),
+        );
+        when(realtime.getConversationById.request(any))
+            .thenAnswer((_) async => ConversationData(id: '1', admins: [UserData('1')], users: [UserData('1'), UserData('2')]));
+        final peer = PeerMock();
+        realtime.addPeer(peer);
+        await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+        final other = PeerMock();
+        realtime.addPeer(other);
+        await realtime.registerUser(Parameters('registerUser', {'id': '2'}), other);
+        final response = await realtime.updateMessage(Parameters('updateMessage', {'id': '1', 'text': 'updated text'}), peer);
+        expect(
+            DeepCollectionEquality().equals(response, {
+              'id': '1',
+              'senderId': '1',
+              'text': 'updated text',
+              'createdAt': '2020-01-01T14:30:00.000Z',
+              'statusDetails': [
+                {'id': '2', 'status': 'sent'}
+              ],
+              'modifiedAt': '2020-01-01T14:30:00.000',
+              'status': 'sent'
+            }),
+            true);
+        verify(other.sendRequest('updateMessage1', any)).called(1);
+      });
+    });
   });
 
   group('production', () {

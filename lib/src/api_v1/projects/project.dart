@@ -65,6 +65,7 @@ class ProjectService {
         _rpcs.messagesRpcs.getMessagesForConversation,
         _rpcs.projectRpcs.getProjectByKey,
         _rpcs.userRpcs,
+        _rpcs.messageRpcs.updateMessage,
       ),
     );
     final realtime = _realtime[projectData.key];

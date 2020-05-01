@@ -16,6 +16,8 @@ export 'src/databases/message/save_message.dart';
 export 'src/rpc/message/save_message.dart';
 export 'src/databases/message/update_message_status.dart';
 export 'src/rpc/message/update_message_status.dart';
+export 'src/databases/message/update_message.dart';
+export 'src/rpc/message/update_message.dart';
 export 'src/databases/message/get_last_message_for_conversation.dart';
 export 'src/rpc/message/message.dart';
 

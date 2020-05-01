@@ -16,8 +16,8 @@ abstract class MessageData with _$MessageData {
     String text,
     DateTime createdAt,
     List<MessageStatusByUserData> statusDetails, {
-    @JsonKey(includeIfNull: false) dynamic metadata,
-    @JsonKey(includeIfNull: false) DateTime modifiedAt,
+    @nullable @JsonKey(includeIfNull: false) dynamic metadata,
+    @nullable @JsonKey(includeIfNull: false) DateTime modifiedAt,
   }) = _MessageData;
 
   factory MessageData.fromJson(Map<String, dynamic> json) => _$MessageDataFromJson(json);

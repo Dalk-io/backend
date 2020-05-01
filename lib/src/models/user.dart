@@ -32,6 +32,10 @@ class User {
     peer?.sendRequest('updateMessageStatus$conversationId', data);
   }
 
+  void updateMessage(String conversationId, Map<String, dynamic> data) {
+    peer?.sendRequest('updateMessage$conversationId', data);
+  }
+
   Map<String, dynamic> toJson() => data.toJson()..remove('password');
 
   @override
