@@ -346,7 +346,7 @@ class Realtime {
     final dynamic metadata = parameters['metadata'].valueOr(null);
     logger.fine('send message parameters $conversationId $text');
     if (metadata != null) {
-      final metadataSize = json.encode(metadata).length;
+      final metadataSize = utf8.encode(json.encode(metadata)).length;
       if (metadataSize > 5000) {
         throw RpcException(HttpStatus.badRequest, 'Metadata is too big', data: {
           'maxSize': 5000,
