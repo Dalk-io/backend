@@ -402,7 +402,9 @@ class Realtime {
     final _projectInformation = projectKey == project.production?.key ? project.production : project.development;
     final isDevelopment = projectKey == project.development.key;
     final canUseWebHook = project.subscriptionType == SubscriptionType.complete;
-    if ((isDevelopment || canUseWebHook) && _projectInformation.webHook != null) {
+    final otherUsersInConversation = conversation.users.where((user) => user != _user.data);
+    final oneMemberIsNotConnected = connectedOthers.map((all) => all.data).toSet().length < otherUsersInConversation.length;
+    if ((isDevelopment || canUseWebHook) && _projectInformation.webHook != null && oneMemberIsNotConnected) {
       runZoned(
         () {
           _httpClient.post(_projectInformation.webHook, body: json.encode(messageJson));

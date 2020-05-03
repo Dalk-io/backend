@@ -19,11 +19,6 @@ import 'src/realtimes/realtime.dart';
 
 void main() {
   final starterProject = ProjectsData(ProjectEnvironmentData('dev-key', '12345'));
-  // final productionSecureStarterWithProject = ProjectsData(
-  //   ProjectEnvironmentData('dev-starter-key', '12345', isSecure: true),
-  //   SubscriptionType.starter,
-  //   production: ProjectEnvironmentData('prod-starter-key', '12345', isSecure: true),
-  // );
 
   test('add Peer', () async {
     final realtime = initRealtime(starterProject);
@@ -1067,11 +1062,12 @@ void main() {
     Realtime starter;
     Realtime complete;
 
-    setUpAll(() {
+    setUp(() {
       starter = initRealtime(
         ProjectsData(
           ProjectEnvironmentData('dev-key', 'dev-secret'),
           production: ProjectEnvironmentData('prod-key', 'prod-secret', isSecure: true, webHook: 'test.fr'),
+          subscriptionType: SubscriptionType.starter,
         ),
       );
       complete = initRealtime(
@@ -1124,7 +1120,49 @@ void main() {
       });
 
       group('send message', () {
-        test('with webhook', () async {
+        test('with webhook when everybody is connected', () async {
+          final realtime = initRealtime(
+            ProjectsData(
+              ProjectEnvironmentData('dev-key', 'dev-secret'),
+              production: ProjectEnvironmentData(
+                'prod-key',
+                'prod-secret',
+                webHook: 'test.fr',
+              ),
+            ),
+          );
+          when(realtime.getConversationById.request(any)).thenAnswer((_) async => ConversationData(
+                id: '1',
+                admins: [UserData('1')],
+                users: [UserData('1'), UserData('2')],
+              ));
+          when(realtime.getNumberOfMessageForConversation.request(any)).thenAnswer((_) async => 1);
+          final peer = PeerMock();
+          final other = PeerMock();
+          realtime..addPeer(peer)..addPeer(other);
+          await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
+          await realtime.registerUser(Parameters('registerUser', {'id': '2'}), other);
+          final response = await realtime.sendMessage(Parameters('sendMessage', {'conversationId': '1', 'text': 'Hello world'}), peer);
+          expect(response.isNotEmpty, isTrue);
+          verifyNever(other.sendRequest('onConversationCreated', any));
+          verify(other.sendRequest('receiveMessage1', any)).called(1);
+          verifyNever(realtime.httpClient.post(any, body: anyNamed('body')));
+          expect(
+            DeepCollectionEquality().equals(response, {
+              'id': '4',
+              'senderId': '1',
+              'text': 'Hello world',
+              'createdAt': '2020-01-01T14:30:00.000Z',
+              'status': 'sent',
+              'statusDetails': [
+                {'id': '2', 'status': 'sent'},
+              ]
+            }),
+            isTrue,
+          );
+        });
+
+        test('with webhook ', () async {
           final realtime = initRealtime(starterProject);
           when(realtime.getConversationById.request(any)).thenAnswer((_) async => ConversationData(
                 id: '1',
@@ -1161,7 +1199,7 @@ void main() {
 
     group('complete', () {
       group('send message', () {
-        test('with webhook', () async {
+        test('with webhook but all user are connected', () async {
           when(complete.getConversationById.request(any)).thenAnswer((_) async => ConversationData(
                 id: '1',
                 admins: [UserData('1')],
@@ -1178,6 +1216,38 @@ void main() {
           final response = await complete.sendMessage(Parameters('sendMessage', {'conversationId': '1', 'text': 'Hello world'}), peer);
           expect(response.isNotEmpty, isTrue);
           verify(other.sendRequest('onConversationCreated', any)).called(1);
+          verifyNever(other.sendRequest('receiveMessage1', any));
+          verifyNever(complete.httpClient.post(any, body: anyNamed('body')));
+          expect(
+            DeepCollectionEquality().equals(response, {
+              'id': '4',
+              'senderId': '1',
+              'text': 'Hello world',
+              'createdAt': '2020-01-01T14:30:00.000Z',
+              'status': 'sent',
+              'statusDetails': [
+                {'id': '2', 'status': 'sent'},
+              ]
+            }),
+            isTrue,
+          );
+        });
+
+        test('with webhook with one user not connected', () async {
+          when(complete.getConversationById.request(any)).thenAnswer((_) async => ConversationData(
+                id: '1',
+                admins: [UserData('1')],
+                users: [UserData('1'), UserData('2')],
+              ));
+          when(complete.getNumberOfMessageForConversation.request(any)).thenAnswer((_) async => 0);
+          final peer = PeerMock();
+          final other = PeerMock();
+          complete..addPeer(peer);
+          final signaturePeer = sha512.convert(utf8.encode('1prod-secret')).toString();
+          await complete.registerUser(Parameters('registerUser', {'id': '1', 'signature': signaturePeer}), peer);
+          final response = await complete.sendMessage(Parameters('sendMessage', {'conversationId': '1', 'text': 'Hello world'}), peer);
+          expect(response.isNotEmpty, isTrue);
+          verifyNever(other.sendRequest('onConversationCreated', any));
           verifyNever(other.sendRequest('receiveMessage1', any));
           verify(complete.httpClient.post(any, body: anyNamed('body'))).called(1);
           expect(
