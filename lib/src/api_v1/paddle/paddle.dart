@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:backend/src/data/project/project.dart';
@@ -27,6 +28,9 @@ class PaddleService {
   @Route.post('/web_hook')
   Future<Response> webHook(Request request) async {
     final logger = Logger('${_logger.name}.web_hook');
+    if (request.headers[HttpHeaders.userAgentHeader] != 'Paddle') {
+      return Response(HttpStatus.unauthorized);
+    }
     final data = await request.readAsString();
     final body = Uri.decodeComponent(data).split('&').map((keyValue) => keyValue.split('=')).toList().asMap().map((_, pair) => MapEntry(pair.first, pair.last));
     if (body['alert_name'] == 'subscription_payment_succeeded') {
