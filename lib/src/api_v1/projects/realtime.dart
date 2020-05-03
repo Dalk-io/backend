@@ -404,6 +404,9 @@ class Realtime {
     final canUseWebHook = project.subscriptionType == SubscriptionType.complete;
     final otherUsersInConversation = conversation.users.where((user) => user != _user.data);
     final oneMemberIsNotConnected = connectedOthers.map((all) => all.data).toSet().length < otherUsersInConversation.length;
+    print(isDevelopment);
+    print(_projectInformation.webHook != null);
+    print(oneMemberIsNotConnected);
     if ((isDevelopment || canUseWebHook) && _projectInformation.webHook != null && oneMemberIsNotConnected) {
       runZoned(
         () {
