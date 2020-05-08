@@ -7,6 +7,7 @@ void main() {
 
 Future<Response> webhook(Request request) async {
   final body = await request.readAsString();
+  //  ignore: avoid_print
   print(body);
   return Response.ok('');
 }

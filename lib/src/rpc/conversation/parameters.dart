@@ -5,8 +5,7 @@ part 'parameters.freezed.dart';
 
 @freezed
 abstract class GetConversationByIdParameters with _$GetConversationByIdParameters {
-  const factory GetConversationByIdParameters(String projectId, String conversationId, {@Default(0) int from, @Default(-1) int to}) =
-      _GetConversationByIdParameters;
+  const factory GetConversationByIdParameters(String projectId, String conversationId, {String from, @Default(1) int take}) = _GetConversationByIdParameters;
 }
 
 @freezed

@@ -6,5 +6,6 @@ String prettyJson(dynamic data) {
 }
 
 void prettyPrintJson(dynamic data) {
+  //  ignore: avoid_print
   print(prettyJson(data));
 }

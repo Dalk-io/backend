@@ -294,14 +294,11 @@ class Realtime {
     if (_user == null) {
       throw RpcException(HttpStatus.unauthorized, 'Not authorized');
     }
-    final from = parameters['from'].asIntOr(0);
-    final to = parameters['to'].asIntOr(-1);
+    final from = parameters['from'].asStringOr(null);
+    final take = parameters['take'].asIntOr(-1);
     final conversationId = parameters['conversationId'].asString;
-    logger.fine('get messages parameters $from $to');
-    if (to != -1 && from < to) {
-      throw RpcException.invalidParams('to can\'t be inferior at from');
-    }
-    final conversation = await getConversationById.request(GetConversationByIdParameters(projectKey, conversationId, from: from, to: to));
+    logger.fine('get messages parameters $from $take');
+    final conversation = await getConversationById.request(GetConversationByIdParameters(projectKey, conversationId, from: from, take: take));
     if (conversation == null) {
       logger.warning('Conversation $conversationId not found');
       logger.info('getMessages took ${sw.elapsed}');
@@ -323,8 +320,10 @@ class Realtime {
       throw RpcException(HttpStatus.unauthorized, 'Not authorized');
     }
     final conversationId = parameters['id'].asString;
+    final from = parameters['from'].asStringOr(null);
+    final take = parameters['take'].asIntOr(-1);
     logger.fine('get conversation parameters $conversationId');
-    final conversation = await getConversationById.request(GetConversationByIdParameters(projectKey, conversationId));
+    final conversation = await getConversationById.request(GetConversationByIdParameters(projectKey, conversationId, from: from, take: take));
     if (conversation == null) {
       logger.warning('Conversation $conversationId not found');
       logger.info('getConversationDetail took ${sw.elapsed}');
@@ -406,9 +405,6 @@ class Realtime {
     final canUseWebHook = project.subscriptionType == SubscriptionType.complete;
     final otherUsersInConversation = conversation.users.where((user) => user != _user.data);
     final oneMemberIsNotConnected = connectedOthers.map((all) => all.data).toSet().length < otherUsersInConversation.length;
-    print(isDevelopment);
-    print(_projectInformation.webHook != null);
-    print(oneMemberIsNotConnected);
     if ((isDevelopment || canUseWebHook) && _projectInformation.webHook != null && oneMemberIsNotConnected) {
       runZoned(
         () {

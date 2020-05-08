@@ -202,7 +202,6 @@ void main() {
           realtime.addPeer(peer);
           await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
           final conversations = await realtime.getConversations(peer);
-          print(conversations);
           expect(conversations, isNotEmpty);
           expect(conversations.length, 1);
           expect(
@@ -582,17 +581,60 @@ void main() {
         }
       });
 
-      test('bad value of from and to', () async {
+      test('with from', () async {
         final realtime = initRealtime(starterProject);
+        when(realtime.getConversationById.request(any)).thenAnswer(
+          (_) async => ConversationData(
+            id: '1',
+            admins: [UserData('1')],
+            users: [UserData('1'), UserData('2')],
+            messages: [
+              MessageData('2', starterProject.development.key, '1', '1', 'Hello world 2', DateTime.utc(2020, 01, 01, 14, 30),
+                  [MessageStatusByUserData('1', MessageStatus.seen), MessageStatusByUserData('2', MessageStatus.sent)]),
+              MessageData('3', starterProject.development.key, '1', '1', 'Hello world 3', DateTime.utc(2020, 01, 01, 14, 30),
+                  [MessageStatusByUserData('1', MessageStatus.seen), MessageStatusByUserData('2', MessageStatus.sent)]),
+              MessageData('4', starterProject.development.key, '1', '1', 'Hello world 4', DateTime.utc(2020, 01, 01, 14, 30),
+                  [MessageStatusByUserData('1', MessageStatus.seen), MessageStatusByUserData('2', MessageStatus.sent)]),
+            ],
+          ),
+        );
         final peer = PeerMock();
         await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
-        try {
-          await realtime.getMessages(Parameters('getMessages', {'from': 0, 'to': 10, 'conversationId': '1'}), peer);
-          expect(true, isFalse);
-        } on RpcException catch (e) {
-          expect(e.code, INVALID_PARAMS);
-          expect(e.message, 'to can\'t be inferior at from');
-        }
+        final response = await realtime.getMessages(Parameters('getMessages', {'conversationId': '1', 'from': '2'}), peer);
+        expect(
+            DeepCollectionEquality().equals(response, [
+              {
+                'id': '2',
+                'senderId': '1',
+                'text': 'Hello world 2',
+                'createdAt': '2020-01-01T14:30:00.000Z',
+                'statusDetails': [
+                  {'id': '2', 'status': 'sent'}
+                ],
+                'status': 'sent'
+              },
+              {
+                'id': '3',
+                'senderId': '1',
+                'text': 'Hello world 3',
+                'createdAt': '2020-01-01T14:30:00.000Z',
+                'statusDetails': [
+                  {'id': '2', 'status': 'sent'}
+                ],
+                'status': 'sent'
+              },
+              {
+                'id': '4',
+                'senderId': '1',
+                'text': 'Hello world 4',
+                'createdAt': '2020-01-01T14:30:00.000Z',
+                'statusDetails': [
+                  {'id': '2', 'status': 'sent'}
+                ],
+                'status': 'sent'
+              }
+            ]),
+            isTrue);
       });
 
       test('when i am not in the conversation', () async {
@@ -800,7 +842,6 @@ void main() {
           realtime..addPeer(peer);
           await realtime.registerUser(Parameters('registerUser', {'id': '1'}), peer);
           final response = await realtime.sendMessage(Parameters('sendMessage', {'conversationId': '1', 'text': 'Hello world'}), peer);
-          print(response);
           expect(response.isNotEmpty, isTrue);
           verifyNever(other.sendRequest('onConversationCreated', any));
           verifyNever(other.sendRequest('receiveMessage1', any));

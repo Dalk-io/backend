@@ -12,10 +12,14 @@ class GetMessagesForConversation extends Endpoint<GetMessagesForConversationPara
 
   @override
   Future<List<MessageData>> request(GetMessagesForConversationParameters input) async {
-    var messagesData = await _getMessagesForConversationFromDatabase.request(input);
-    if (input.to > 0 && input.from < input.to) {
-      messagesData = messagesData.skip(input.from).take(input.to - input.from).toList();
+    final _messagesData = await _getMessagesForConversationFromDatabase.request(input);
+    var messagesData = _messagesData.map((e) => MessageData.fromDatabase(e)).toList();
+    if (input.from != null) {
+      messagesData = messagesData.skipWhile((value) => value.id != input.from).toList();
     }
-    return messagesData.map((message) => MessageData.fromDatabase(message)).toList();
+    if (input.take > -1) {
+      messagesData = messagesData.take(input.take).toList();
+    }
+    return messagesData.toList();
   }
 }

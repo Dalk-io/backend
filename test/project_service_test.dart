@@ -61,6 +61,7 @@ void main() {
     final webSocket = WebSocketChannelMock();
     final _loggedMessages = <String>[];
     await runZoned(() async {
+      //  ignore: avoid_print
       Logger.root.onRecord.where((record) => record.loggerName == 'ProjectService.onWebSocket').map((record) => record.message).listen(print);
       final onWebSocketFuture = projectService.onWebSocket(request, webSocket);
       completer.complete();

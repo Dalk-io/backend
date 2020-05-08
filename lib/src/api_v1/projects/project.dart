@@ -163,8 +163,8 @@ class ProjectService {
       GetConversationByIdParameters(
         projectKey,
         conversationId,
-        from: int.tryParse(request.requestedUri.queryParameters['from']) ?? 0,
-        to: int.tryParse(request.requestedUri.queryParameters['to']) ?? 1,
+        from: request.requestedUri.queryParameters['from'],
+        take: int.tryParse(request.requestedUri.queryParameters['to'] ?? '1'),
       ),
     );
     return Response.ok(
