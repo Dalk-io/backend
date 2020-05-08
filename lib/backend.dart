@@ -1,4 +1,5 @@
 export 'src/backend.dart';
+export 'src/utils/get_pg_pool.dart';
 
 //  database endpoint
 export 'src/databases/from.dart';
