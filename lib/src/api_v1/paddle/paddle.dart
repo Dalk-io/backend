@@ -52,9 +52,9 @@ class PaddleService {
     }
     final project = await _rpcs.projectRpcs.getProjectById.request(accountData.projectId);
     var subscriptionType = SubscriptionType.none;
-    if (body['subscription_id'] == '591710' || body['subscription_id'] == '591438') {
+    if (body['subscription_plan_id'] == '591710' || body['subscription_plan_id'] == '591438') {
       subscriptionType = SubscriptionType.starter;
-    } else if (body['subscription_id'] == '591709' || body['subscription_id'] == '591439') {
+    } else if (body['subscription_plan_id'] == '591709' || body['subscription_plan_id'] == '591439') {
       subscriptionType = SubscriptionType.complete;
     }
     if (subscriptionType == SubscriptionType.none) {
