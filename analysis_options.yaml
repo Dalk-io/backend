@@ -13,5 +13,4 @@ analyzer:
     must_be_immutable: error
   strong-mode:
     implicit-casts: false
-    # comment this for ci until https://github.com/dart-lang/sdk/issues/25551 this is fixed
     # implicit-dynamic: false
