@@ -196,7 +196,9 @@ class Realtime {
       throw RpcException(HttpStatus.unauthorized, 'Not authorized');
     }
     final userConversations = await getConversationsForUser.request(GetConversationsForUserParameters(projectKey, _user.data.id));
-    final response = userConversations.map((conversation) {
+    final response = userConversations
+        .where((conversation) => conversation.isGroup || conversation.messages.isNotEmpty || conversation.admins.contains(_user.data))
+        .map((conversation) {
       final conversationJson = conversation.toJson();
       conversationJson['messages'] = [if (conversation.messages.isNotEmpty) messageToJson(conversation.messages.first)];
       return conversationJson;

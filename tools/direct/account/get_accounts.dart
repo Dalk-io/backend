@@ -5,7 +5,7 @@ void main() async {
     PgEndpoint(
       host: '51.159.24.51',
       port: 45107,
-      database: 'development',
+      database: 'production',
       username: 'dalk',
       password: 'Lg-)bTvEf=s2r}>yz2k@O',
       requireSsl: true,

@@ -99,7 +99,7 @@ void main() {
       });
 
       group('user with conversations', () {
-        test('without messages', () async {
+        test('without messages but i am admin', () async {
           when(realtime.getConversationsForUser.request(any)).thenAnswer(
             (_) async => [
               ConversationData(
@@ -128,6 +128,51 @@ void main() {
                 }
               ]),
               isTrue);
+        });
+
+        test('without message but conversation is a group', () async {
+          when(realtime.getConversationsForUser.request(any)).thenAnswer(
+            (_) async => [
+              ConversationData(
+                  id: '1', subject: null, avatar: null, admins: [UserData('1')], users: [UserData('1'), UserData('2')], messages: [], isGroup: true),
+            ],
+          );
+          final peer = PeerMock();
+          realtime.addPeer(peer);
+          await realtime.registerUser(Parameters('registerUser', {'id': '2'}), peer);
+          final conversations = await realtime.getConversations(peer);
+          expect(conversations, isNotEmpty);
+          expect(conversations.length, 1);
+          expect(
+              DeepCollectionEquality().equals(conversations, [
+                {
+                  'id': '1',
+                  'admins': [
+                    {'id': '1'}
+                  ],
+                  'users': [
+                    {'id': '1'},
+                    {'id': '2'}
+                  ],
+                  'messages': <dynamic>[],
+                  'isGroup': true
+                }
+              ]),
+              isTrue);
+        });
+
+        test('without message an i am not an admins and it is not a group', () async {
+          when(realtime.getConversationsForUser.request(any)).thenAnswer(
+            (_) async => [
+              ConversationData(
+                  id: '1', subject: null, avatar: null, admins: [UserData('1')], users: [UserData('1'), UserData('2')], messages: [], isGroup: false),
+            ],
+          );
+          final peer = PeerMock();
+          realtime.addPeer(peer);
+          await realtime.registerUser(Parameters('registerUser', {'id': '2'}), peer);
+          final conversations = await realtime.getConversations(peer);
+          expect(conversations, isEmpty);
         });
 
         test('with messages', () async {
