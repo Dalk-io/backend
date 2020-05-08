@@ -1,3 +1,5 @@
+//  ignore_for_file: avoid_print
+
 import 'package:postgres_pool/postgres_pool.dart';
 
 void main(List<String> arguments) async {

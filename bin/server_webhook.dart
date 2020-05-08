@@ -1,3 +1,5 @@
+//  ignore_for_file: avoid_print
+
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 
@@ -7,7 +9,6 @@ void main() {
 
 Future<Response> webhook(Request request) async {
   final body = await request.readAsString();
-  //  ignore: avoid_print
   print(body);
   return Response.ok('');
 }

@@ -1,3 +1,5 @@
+//  ignore_for_file: avoid_print
+
 import 'dart:io';
 
 import 'package:backend/backend.dart';
@@ -8,7 +10,6 @@ import 'package:shelf/shelf_io.dart' as shelf_io;
 
 void main(List<String> arguments) async {
   Logger.root.level = Level.ALL;
-  //  ignore: avoid_print
   Logger.root.onRecord.listen((record) => print('${record.time.toIso8601String()} ${record.level.name} ${record.loggerName}: ${record.message}'));
   final _logger = Logger('main');
 
