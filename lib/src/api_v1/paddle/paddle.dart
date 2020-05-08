@@ -6,6 +6,7 @@ import 'package:backend/src/data/project/project.dart';
 import 'package:backend/src/rpc/rpcs.dart';
 import 'package:backend/src/utils/pretty_json.dart';
 import 'package:crypto/crypto.dart';
+import 'package:http/io_client.dart';
 import 'package:logging/logging.dart';
 import 'package:mailer/smtp_server.dart';
 import 'package:shelf/shelf.dart';
@@ -18,10 +19,14 @@ part 'paddle.g.dart';
 
 class PaddleService {
   final Rpcs _rpcs;
+  final IOClient _httpClient;
+
+  final String _paddleVendorId = Platform.environment['PADDLE_VENDOR_ID'];
+  final String _paddleAuthCode = Platform.environment['PADDLE_AUTH_CODE'];
 
   final _logger = Logger('PaddleService');
 
-  PaddleService(this._rpcs);
+  PaddleService(this._rpcs, {IOClient httpClient}) : _httpClient = httpClient ?? IOClient();
 
   Router get router => _$PaddleServiceRouter(this);
 
@@ -60,6 +65,25 @@ class PaddleService {
     if (subscriptionType == SubscriptionType.none) {
       await _rpcs.projectRpcs.updateProject.request(project.copyWith(subscriptionType: subscriptionType, production: null));
       return;
+    }
+    if (_paddleVendorId != null && _paddleAuthCode != null) {
+      final paddleRequestBody = StringBuffer('vendor_id=$_paddleVendorId&vendor_auth_code=$_paddleAuthCode&subscription_id=${body['subscription_id']}');
+      final paddleResponse = await _httpClient.post(
+        'https://vendors.paddle.com/api/2.0/subscription/payments',
+        body: paddleRequestBody.toString(),
+        headers: {
+          HttpHeaders.contentTypeHeader: 'application/x-www-form-urlencoded',
+        },
+      );
+      final paddleResponseJson = json.decode(paddleResponse.body) as Map;
+      if (!(paddleResponseJson['success'] as bool)) {
+        await _sendMail(body, moreInfos: 'The subscription is not found on paddle.');
+        return;
+      }
+      if (paddleResponseJson.containsKey('response') && paddleResponseJson['response']['paid'] != 1) {
+        await _sendMail(body, moreInfos: 'The subscription is found but is not paid on paddle.');
+        return;
+      }
     }
     final uuid = Uuid(options: <String, dynamic>{'grng': UuidUtil.cryptoRNG});
     final productionKeyUuid = uuid.v1(
