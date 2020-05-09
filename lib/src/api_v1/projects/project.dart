@@ -7,6 +7,7 @@ import 'package:backend/src/api_v1/projects/realtime.dart';
 import 'package:backend/src/data/project/project.dart';
 import 'package:backend/src/middlewares/check_project_exist.dart';
 import 'package:backend/src/rpc/conversation/parameters.dart';
+import 'package:backend/src/rpc/conversations/parameters.dart';
 import 'package:backend/src/rpc/messages/parameters.dart';
 import 'package:backend/src/rpc/rpcs.dart';
 import 'package:backend/src/utils/check_token.dart';
@@ -131,7 +132,11 @@ class ProjectService {
     if (![projectData.development.key, if (projectData.production?.key != null) projectData.production.key].contains(projectKey)) {
       return Response.notFound('');
     }
-    final conversationsData = await _rpcs.conversationsRpcs.getConversationsForProject.request(projectKey);
+    final conversationsData = await _rpcs.conversationsRpcs.getConversationsForProject.request(GetConversationsForProjectParamters(
+      projectKey,
+      from: request.requestedUri.queryParameters['from'],
+      take: int.tryParse(request.requestedUri.queryParameters['take'] ?? '-1') ?? -1,
+    ));
     final jsonResponse = conversationsData.map((conversation) {
       final conversationJson = conversation.toJson();
       conversationJson['messages'] = [if (conversation.messages.isNotEmpty) messageToJson(conversation.messages.first, filter: false)];
@@ -164,7 +169,7 @@ class ProjectService {
         projectKey,
         conversationId,
         from: request.requestedUri.queryParameters['from'],
-        take: int.tryParse(request.requestedUri.queryParameters['to'] ?? '1'),
+        take: int.tryParse(request.requestedUri.queryParameters['to'] ?? '1') ?? 1,
       ),
     );
     return Response.ok(
@@ -194,7 +199,12 @@ class ProjectService {
       return Response.notFound('');
     }
     final conversationId = params(request, 'conversationId');
-    final messages = await _rpcs.messagesRpcs.getMessagesForConversation.request(GetMessagesForConversationParameters(projectKey, conversationId));
+    final messages = await _rpcs.messagesRpcs.getMessagesForConversation.request(GetMessagesForConversationParameters(
+      projectKey,
+      conversationId,
+      from: request.requestedUri.queryParameters['from'],
+      take: int.tryParse(request.requestedUri.queryParameters['take'] ?? '-1') ?? -1,
+    ));
     return Response.ok(
       json.encode(messages.map((message) => messageToJson(message, filter: false)).toList()),
       headers: {
