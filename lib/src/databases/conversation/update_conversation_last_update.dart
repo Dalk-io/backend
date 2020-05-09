@@ -7,9 +7,9 @@ class UpdateConversationLastUpdateToDatabase extends DatabaseEndpoint<UpdateConv
       : super(
           pgPool,
           (input) => pgPool.query(
-            'UPDATE conversations SET lastUpdate = @lastUpdate WHERE projectId = @projectId AND id = @conversationId',
+            'UPDATE conversations SET lastMessageCreatedAt = @lastMessageCreatedAt WHERE projectId = @projectId AND id = @conversationId',
             substitutionValues: <String, dynamic>{
-              'lastUpdate': DateTime.now().toUtc().toIso8601String(),
+              'lastMessageCreatedAt': DateTime.now().toUtc().toIso8601String(),
               'projectId': input.projectId,
               'conversationId': input.conversationId,
             },

@@ -6,7 +6,7 @@ class GetConversationsForProjectFromDatabase extends DatabaseEndpoint<String> {
       : super(
           pgPool,
           (input) => pgPool.query(
-            'SELECT id, subject, avatar, admins, users, isGroup FROM conversations WHERE projectId = @projectId ORDER BY lastUpdate DESC',
+            'SELECT id, subject, avatar, admins, users, isGroup FROM conversations WHERE projectId = @projectId ORDER BY lastMessageCreatedAt DESC',
             substitutionValues: <String, dynamic>{
               'projectId': input,
             },
