@@ -1,9 +1,11 @@
+import 'dart:io';
+
 import 'package:backend/backend.dart';
 
 import 'src/migrations.dart';
 
-void main(List<String> arguments) async {
-  final pg = getPgPool(arguments.first);
+void main() async {
+  final pg = getPgPool(Platform.environment['DATABASE_NAME']);
 
   final versionResult = await pg.query('SELECT * FROM database_version');
   final version = versionResult.first.first as int;
