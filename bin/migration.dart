@@ -1,5 +1,6 @@
 import 'package:backend/backend.dart';
-import 'package:postgres_pool/postgres_pool.dart';
+
+import 'src/migrations.dart';
 
 void main(List<String> arguments) async {
   final pg = getPgPool(arguments.first);
@@ -8,8 +9,13 @@ void main(List<String> arguments) async {
   final version = versionResult.first.first as int;
 
   var needUpgrade = false;
-  if (version == 1) {
-    needUpgrade = await v1ToV2(pg);
+  for (final migration in migrations) {
+    if (migration.version == version) {
+      for (final sqlCommand in migration.sqlCommands) {
+        await pg.execute(sqlCommand);
+      }
+      needUpgrade = true;
+    }
   }
 
   if (needUpgrade) {
@@ -23,9 +29,4 @@ void main(List<String> arguments) async {
   }
 
   await pg.close();
-}
-
-Future<bool> v1ToV2(PgPool pg) async {
-  await pg.execute('ALTER TABLE conversations RENAME COLUMN lastUpdate TO lastMessageCreatedAt;');
-  return true;
 }
