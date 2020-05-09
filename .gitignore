@@ -12,3 +12,4 @@ doc/api/
 **/*.freezed.dart
 **/.DS_STORE
 .idea
+tools/
