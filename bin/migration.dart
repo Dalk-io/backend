@@ -8,15 +8,17 @@ void main() async {
   final pg = getPgPool(Platform.environment['DATABASE_NAME']);
 
   final versionResult = await pg.query('SELECT * FROM database_version');
-  final version = versionResult.first.first as int;
+  final currentVersion = versionResult.first.first as int;
 
   var needUpgrade = false;
+  var version = currentVersion;
   for (final migration in migrations) {
     if (migration.version == version) {
       for (final sqlCommand in migration.sqlCommands) {
         await pg.execute(sqlCommand);
       }
       needUpgrade = true;
+      version = migration.version + 1;
     }
   }
 
@@ -24,8 +26,8 @@ void main() async {
     await pg.execute(
       'UPDATE database_version SET version = @newVersion WHERE version = @oldVersion',
       substitutionValues: {
-        'oldVersion': version,
-        'newVersion': version + 1,
+        'oldVersion': currentVersion,
+        'newVersion': version,
       },
     );
   }
